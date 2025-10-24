@@ -17,6 +17,7 @@ createInertiaApp({
     setup({ el, App, props }) {
         const root = createRoot(el);
 
+        // Render our app
         root.render(<App {...props} />);
     },
     progress: {
@@ -26,3 +27,23 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+
+// APPLICATION (BACKEND) FUNCTIONS
+
+/**
+ * ApplicationDashboard(): 
+ *  Should have the elements
+ *      - Navbar with all the required tabs
+ *      - File Upload
+ *      - File History
+ *      - More details in the file
+ * 
+ * @returns the backend page for the dashboard of the application
+ */
+function ApplicationDashboard() 
+{
+    return (
+        <ApplicationDashboard />
+    );
+}
