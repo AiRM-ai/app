@@ -14,7 +14,6 @@
             <h1 class="text-center text-6xl text-blue-700 font-bold">Smarter Decisions for a Connected Supply Chain</h1>
         </div>
     </header>
-
     <main>
         <div class="flex-row bg-gray-800 p-3 h-3/4">
             <section class="p-2">
