@@ -21,4 +21,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// --------------------------------
+// APPLICATION ROUTES
+Route::get('/app/dashboard', function () {
+    return view('application.applicationDashboard');
+})->middleware(['auth', 'verified'])->name('application.applicationDashboard');
+
+// --------------------------------
+
 require __DIR__.'/auth.php';
