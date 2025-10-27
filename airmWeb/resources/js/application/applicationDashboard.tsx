@@ -5,7 +5,9 @@ const ApplicationDashboard: FC = () =>
 {
     return (
         <div>
-            <h1>Hello</h1>
+            <h1>Import Documents</h1>
+
+            <h1>Import History</h1>
         </div>
     );
 }
