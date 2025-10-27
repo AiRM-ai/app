@@ -11,6 +11,26 @@ Route::get('/home', function () {
     return view('website.homepage');
 });
 
+Route::get('/about', function () {
+    return view('website.about.about');
+});
+
+Route::get('/contact', function () {
+    return view('website.contact');
+});
+
+Route::get('/product', function () {
+    return view('website.product.product');
+});
+
+Route::get('/team', function () {
+    return view('website.about.team');
+});
+
+Route::get('/tech', function () {
+    return view('website.about.tech');
+});
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
