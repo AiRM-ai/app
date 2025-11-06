@@ -1,25 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AiRM.ai</title>
-    @viteReactRefresh
-    @vite(["resources/js/app.tsx", "resources/css/app.css"])
-</head>
-<body>
-    <header>
-        <h1>About the company</h1>
-    </header>
-    <main>
-        <section>
-            <h2>We strive to make a better way for businesses to order and allocate prices based on the market as a whole</h2>
-            <h1>Our values</h1>
-            <p>We as a company love the idea of slavery and exploitation of free labor. We also believe in tax evasion and that the company values lying to the government.</p>
-        </section>
-        <section>
-            <h2>AiRM.ai Demo</h2>
-        </section>
-    </main>
-</body>
-</html>
+@extends('website.layouts.main')
+
+@section('title', 'About')
+
+@section('content')
+<header>
+    <h1 class="text-center text-4xl font-bold mb-6">About the Company</h1>
+</header>
+
+<main class="max-w-4xl mx-auto space-y-8 text-center">
+    <section>
+        <h2 class="text-2xl font-semibold mb-4">
+            We strive to create smarter, AI-powered ways for businesses to optimize orders and pricing across the market.
+        </h2>
+
+        <h3 class="text-xl font-bold mt-8 mb-3 text-blue-400">Our Values</h3>
+        <p class="text-gray-300 leading-relaxed">
+            At AiRM.ai, we believe in transparency, innovation, and responsible AI deployment. 
+            Our goal is to empower companies with tools that drive sustainable growth and smarter decision-making.
+        </p>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-semibold mb-3 text-blue-400">AiRM.ai Demo</h2>
+        <p class="text-gray-300">Discover how our system learns, predicts, and adapts to your business needs.</p>
+    </section>
+</main>
+@endsection

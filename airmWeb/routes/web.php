@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () 
 {
-    return view('welcome');
+    return view('website.homepage');
 });
 
 Route::get('/home', function () 
@@ -34,7 +34,7 @@ Route::get('/tech', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    return view('website.dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () 
