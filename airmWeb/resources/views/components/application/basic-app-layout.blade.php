@@ -11,14 +11,16 @@
     <!-- Vite Directives to load compiled CSS and JS -->
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- This script loads your compiled React app -->
+    @vite('resources/js/app.tsx')
 </head>
 <body class="flex flex-col min-h-screen min-w-screen bg-gray-700">
     
     <!-- Main Content -->
     <main class = "flex-grow bg-white">
-        <!-- This is where the content of each page will be injected -->
+        {{-- <!-- This is where the content of each page will be injected --> --}}
         {{ $slot }} <!--Whatever is passed to this component will be displayed here-->
     </main>
-    
+
 </body>
 </html>
