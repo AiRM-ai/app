@@ -10,6 +10,7 @@ import TabLayout from "../components/applicationComponents/dashboardComponents/T
 import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
 import ApplicationDataViewer from './ApplicationDataViewer';
 import ApplicationProcessData from './ApplicationProcessData';
+import ApplicationItemList from './ApplicationItemList';
 
 
 const ApplicationDashboard: FC = () => 
@@ -32,8 +33,7 @@ const ApplicationDashboard: FC = () =>
         case 1:
             return <ApplicationDataViewer />;
         case 2:
-            // PLEASE CHANGE
-            return <ApplicationProcessData />;
+            return <ApplicationItemList />;
         default:
             return <ApplicationProcessData />;
         }
