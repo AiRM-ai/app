@@ -1,11 +1,17 @@
 import '../css/app.css';
 
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+// Components
+import ApplicationDashboard from "./application/ApplicationDashboard";
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -30,10 +36,10 @@ initializeTheme();
 
 
 // APPLICATION (BACKEND) FUNCTIONS
-
 /**
- * ApplicationDashboard(): 
- *  Should have the elements
+ * Render the app in the webpage
+ * Render the dashboard,
+ * Should have the elements
  *      - Navbar with all the required tabs
  *      - File Upload
  *      - File History
@@ -41,9 +47,14 @@ initializeTheme();
  * 
  * @returns the backend page for the dashboard of the application
  */
-function ApplicationDashboard() 
+const dashboardElement = document.getElementById('application-dashboard');
+
+if (dashboardElement) 
 {
-    return (
-        <ApplicationDashboard />
+    const root = ReactDOM.createRoot(dashboardElement);
+    root.render(
+        <React.StrictMode>
+            <ApplicationDashboard />
+        </React.StrictMode>
     );
 }
