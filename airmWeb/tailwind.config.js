@@ -1,5 +1,6 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
+import withMT from "@material-tailwind/html/utils/withMT";
 
 /** @type {import('tailwindcss').Config} */
 export default {

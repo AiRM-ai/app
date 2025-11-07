@@ -15,6 +15,11 @@ import AccountCircle from '@mui/icons-material/AccountCircle';
 import MailIcon from '@mui/icons-material/Mail';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+
+// Components
+import TabLayout from "./TabLayout";
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -80,6 +85,12 @@ export default function PrimarySearchAppBar() {
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMoreAnchorEl(event.currentTarget);
+  };
+
+  // FOR TABS
+  const [tabValue, setValue] = React.useState(0);
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setValue(newValue);
   };
 
   const menuId = 'primary-search-account-menu';
@@ -166,6 +177,25 @@ export default function PrimarySearchAppBar() {
               inputProps={{ 'aria-label': 'search' }}
             />
           </Search>
+
+          {/* ADD TABS  */}
+          <Box sx={{ width: 500, border: "none", backgroundColor: "transparent", boxShadow: "none" }}>
+            <AppBar position="static" sx={{ border:"none", backgroundColor: "transparent", boxShadow:"none"}}>
+              <Tabs
+                value={tabValue}
+                onChange={handleTabChange}
+                indicatorColor="secondary"
+                textColor="inherit"
+                variant="fullWidth"
+                aria-label="full width tabs"
+              >
+                <Tab label="Process Data" />
+                <Tab label="Data Viewer" />
+                <Tab label="Item List" />
+              </Tabs>
+            </AppBar>
+          </Box>
+
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             <IconButton
