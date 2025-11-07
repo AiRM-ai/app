@@ -17,9 +17,10 @@ const VisuallyHiddenInput = styled('input')({
 
 export default function InputFileUpload() {
   // Create a state to hold the selected files
-  const [selectedFiles, setSelectedFiles] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState<string[] | any>(null);
 
-  const handleFileChange = (event) => {
+  // I don't know why event data type is so weird - I HATE REACT I HATE TYPESCRIPT
+  const handleFileChange = (event: { target: { files: any; }; }) => {
     // When files are selected, update the state
     setSelectedFiles(event.target.files);
     console.log(event.target.files); // You can still log them
@@ -40,7 +41,8 @@ export default function InputFileUpload() {
 
     // 2. Append each file to the FormData object
     // The key 'files[]' is important for Laravel to recognize it as an array of files
-    for (let i = 0; i < selectedFiles.length; i++) {
+    for (let i = 0; i < selectedFiles.length; i++) 
+    {
       formData.append('files[]', selectedFiles[i]);
     }
 

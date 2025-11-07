@@ -8,42 +8,47 @@ import Container from '@mui/material/Container';
 import ApplicationTopBar from "../components/applicationComponents/dashboardComponents/ApplicationTopBar";
 import TabLayout from "../components/applicationComponents/dashboardComponents/TabLayout";
 import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
+import ApplicationDataViewer from './ApplicationDataViewer';
+import ApplicationProcessData from './ApplicationProcessData';
 
 
 const ApplicationDashboard: FC = () => 
 {
+    // Current Tab State
+    const [tabValue, setTabValue] = useState(0);
+
+    // Handler to switch tabs and all
+    const handleTabChange = (event: any, newValue: React.SetStateAction<number>) => {
+        setTabValue(newValue);
+    };
+
+    // Function to decide which page to render
+    const renderPage = () => {
+        console.log("TAB VALUE =" + tabValue);
+
+        switch (tabValue) {
+        case 0:
+            return <ApplicationProcessData />;
+        case 1:
+            return <ApplicationDataViewer />;
+        case 2:
+            // PLEASE CHANGE
+            return <ApplicationProcessData />;
+        default:
+            return <ApplicationProcessData />;
+        }
+    };
+
     return (
         <div>
             {/* Application Top Bar */}
-            <ApplicationTopBar />
-
-            {/* TABS */}
-            {/* <TabLayout /> */}
+            <ApplicationTopBar tabValue={tabValue} handleTabChange={handleTabChange} />
 
             {/* MAIN APPLICATION GRID */}
-            <div className = "w-full p-6 mt-4 mb-3">
-                <Grid container 
-                    spacing={4}
-                    justifyContent={"center"} // centers items vertically
-                    direction="column"  // stacks items
-                    alignContent={"center"} // centers items horizontally
-                    alignItems="center"
-                    sx={{ width: '100%', 
-                          border: '1px solid grey'
-                     }}
-                >
-                    <Grid size = {8}>
-                        <span className="text-gray-700">Upload the required files to import here.</span>
-                    </Grid>
-                    <Grid size = {8}>
-                        {/* FILE UPLOAD BUTTON */}
-                        <FileUploadButton />
-                    </Grid>
-                    <Grid size = {8}>
-                        <span className="text-gray-700">Note: Only files of .csv and .xlsx type are allowed</span>
-                    </Grid>
-                </Grid>
-            </div>
+            {/* Based on which tab is selected lol */}
+            <Box>
+                {renderPage()}
+            </Box>
         </div>
     );
 }

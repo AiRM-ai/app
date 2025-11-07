@@ -61,7 +61,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function PrimarySearchAppBar() {
+export default function PrimarySearchAppBar({ tabValue, handleTabChange }) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -85,12 +85,6 @@ export default function PrimarySearchAppBar() {
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMoreAnchorEl(event.currentTarget);
-  };
-
-  // FOR TABS
-  const [tabValue, setValue] = React.useState(0);
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
   };
 
   const menuId = 'primary-search-account-menu';

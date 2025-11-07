@@ -51,7 +51,7 @@ Route::middleware('auth')->group(function ()
 
 // --------------------------------
 // APPLICATION ROUTES
-Route::get('/app/dashboard', function () # 
+Route::get('/app', function () # 
 {
     return view('application.applicationDashboard');
 })->middleware(['auth', 'verified'])->name('application.applicationDashboard');
