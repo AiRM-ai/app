@@ -3,9 +3,14 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+// NOTES
+// return view("folderName.viewName");
+// tells php to return the view from resources/views/folderName/viewName
+// no need to include blade.php
+
 Route::get('/', function () 
 {
-    return view('welcome');
+    return view('website.homepage');
 });
 
 Route::get('/home', function () 
@@ -46,7 +51,7 @@ Route::middleware('auth')->group(function ()
 
 // --------------------------------
 // APPLICATION ROUTES
-Route::get('/app/dashboard', function () 
+Route::get('/app', function () # 
 {
     return view('application.applicationDashboard');
 })->middleware(['auth', 'verified'])->name('application.applicationDashboard');
