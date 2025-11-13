@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 // My Controllers:
 use App\Http\Controllers\ImportedDocumentsController;
+use App\Http\Controllers\ItemsListController;
 
 // NOTES
 // return view("folderName.viewName");
@@ -63,6 +64,9 @@ Route::get('/app', function ()
 // API ROUTES
 // For File Upload
 Route::post('/documents/save-metadata', [ImportedDocumentsController::class, 'storeDocumentData'])->middleware('auth', 'verified');
+
+// For adding items
+Route::post('/data/add-item', [ItemsListController::class, 'addItem'])->middleware('auth', 'verified');
 
 // --------------------------------
 

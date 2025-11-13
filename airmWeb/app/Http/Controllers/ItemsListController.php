@@ -33,10 +33,11 @@ class ItemsListController extends Controller
         // Make sure the request is valid
         /// These values better be present!
         $validated = $request->validate([
-            'username' => 'required',
             'item_name' => 'required',
+            'item_description' => 'nullable',
             'item_price' => 'required',
             'item_stock' => 'required',
+            'item_currency' => 'required'
         ]);
 
         // Get username
@@ -46,8 +47,10 @@ class ItemsListController extends Controller
         $items = new ItemList();
         $items->username = $username;
         $items->item_name = $validated['item_name'];
+        $items->item_description = $validated['item_description'];
         $items->item_price = $validated['item_price'];
-        $items->item_price = $validated['item_stock'];
+        $items->item_stock = $validated['item_stock'];
+        $items->item_currency = $validated['item_currency'];
 
         // Save the model - insert into database
         $items->save();

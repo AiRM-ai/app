@@ -52,12 +52,100 @@ function createData(
 
 function AddItemInputForm({ open, handleClose }) 
 {
+    const addItemToDatabase = async (formData: any) => {
+      try 
+      {
+        // Use fetch to send a POST request to our new Laravel endpoint (in web.php)
+        const response = await fetch('/data/add-item', {
+          method: 'POST',
+          headers: {
+            // Tell the server we are sending JSON data
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+          },
+          body: JSON.stringify(formData), // Convert the JS object to a JSON string
+        });
+
+        if (!response.ok) 
+        {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to add item.');
+        }
+
+        const result = await response.json();
+        console.log('Success:', result.message);
+        alert('Added Item Successfully!!');
+
+      } 
+      catch (error) 
+      {
+        console.error('Error adding item:', error);
+        alert('Error: Could add the item.');
+      }
+  };
+
   // FOR FORM DATA + verification if all required fields are there or not
   const [formData, setFormData] = useState({
-    itemName: '',
-    description: '',
+    item_name: '',
+    item_description: '',
+    item_price: '',
+    item_stock: '',
+    item_currency: 'JPY',
   });
 
+  const [errors, setErrors] = useState({});
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+
+    // Clear the specific error for the field being edited
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: '',
+      });
+    }
+  };
+
+  const validate = () => {
+    let tempErrors = {};
+    tempErrors.item_name = formData.item_name ? '' : 'This field is required.';
+    tempErrors.item_price = formData.item_price ? '' : 'This field is required.';
+    tempErrors.item_stock = formData.item_stock ? '' : 'This field is required.';
+    setErrors(tempErrors);
+
+    // This checks if all the values in the tempErrors object are empty strings
+    return Object.values(tempErrors).every((x) => x === '');
+  };
+
+  // Clear form after submission
+  const clearForm = () =>
+  {
+    formData.item_name = '';
+    formData.item_description = '';
+    formData.item_stock = '';
+    formData.item_price = '';
+    formData.item_currency = 'JPY';
+
+  }
+
+  // FORM SUBMISSION!!--->
+  const handleSubmit = () => {
+    if (validate()) 
+    {
+      // Proceed with form submission logic
+      console.log('Item Added Successfully:', formData);
+      addItemToDatabase(formData);
+      handleClose(); // Close the dialog
+      clearForm();
+    }
+  };
 
   const currencies = [
     {
@@ -87,38 +175,54 @@ function AddItemInputForm({ open, handleClose })
           <div>
             <TextField
               required
-              id="filled-required"
+              value={formData.item_name}
+              onChange={handleChange}
+              error={!!errors.item_name} // The `!!` converts the string to a boolean
+              helperText={errors.item_name}
+              name="item_name"
+              id="item_name"
               label="Item Name"
-              defaultValue=""
               variant="filled"
             />
             <TextField
-              id="filled-description"
-              label="Description"
-              defaultValue=""
+              value={formData.item_description}
+              onChange={handleChange}
+              name="item_description"
+              id="item_description"
+              label="Item Description"
               variant="filled"
             />
             <TextField
-              id="filled-required"
+              value={formData.item_price}
+              onChange={handleChange}
+              error={!!errors.item_price} // The `!!` converts the string to a boolean
+              helperText={errors.item_price}
+              name = "item_price"
+              id="item_price"
               label="Item Price"
-              defaultValue=""
               variant="filled"
               type="number"
             />
             <TextField
-              id="filled-required"
+              value={formData.item_stock}
+              onChange={handleChange}
+              error={!!errors.item_stock} // The `!!` converts the string to a boolean
+              helperText={errors.item_stock}
+              name="item_stock"
+              id="item_stock"
               label="Item Stock"
-              defaultValue=""
               variant="filled"
               type="number"
               slotProps = {{ htmlInput: {step: 1,}, }}
             />
             <TextField
-              id="filled-select-currency"
               select
-              label="Select"
-              defaultValue="JPY"
-              helperText="Please select your currency"
+              value={formData.item_currency}
+              onChange={handleChange}
+              name="item_currency"
+              id="item_currency"
+              label="Select Item Currency"
+              helperText="Please select your item's currency"
               variant="filled"
             >
               {currencies.map((option) => (
@@ -133,7 +237,7 @@ function AddItemInputForm({ open, handleClose })
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleClose}>Add</Button>
+        <Button onClick={handleSubmit}>Add</Button>
       </DialogActions>
     </Dialog>
   );

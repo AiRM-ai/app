@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string("username", length: 100);
             $table->string("item_name");
+            $table->longText("item_description");
             $table->float("item_price");
             $table->integer("item_stock");
+            $table->string("item_currency");
             $table->timestamps();
         });
     }
