@@ -32,7 +32,7 @@ const ApplicationProcessData: FC = () =>
                     <FileUploadButton />
                 </Grid>
                 <Grid size = {8}>
-                    <span className="text-gray-700">Note: Only files of .csv and .xlsx type are allowed</span>
+                    <span className="text-gray-700">Note: Only files of .csv type are allowed as of now</span>
                 </Grid>
             </Grid>
         </div>

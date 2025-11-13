@@ -3,6 +3,9 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+// My Controllers:
+use App\Http\Controllers\ImportedDocumentsController;
+
 // NOTES
 // return view("folderName.viewName");
 // tells php to return the view from resources/views/folderName/viewName
@@ -51,10 +54,15 @@ Route::middleware('auth')->group(function ()
 
 // --------------------------------
 // APPLICATION ROUTES
-Route::get('/app', function () # 
+Route::get('/app', function () 
 {
     return view('application.applicationDashboard');
 })->middleware(['auth', 'verified'])->name('application.applicationDashboard');
+
+// --------------------------------
+// API ROUTES
+// For File Upload
+Route::post('/documents/save-metadata', [ImportedDocumentsController::class, 'storeDocumentData'])->middleware('auth', 'verified');
 
 // --------------------------------
 

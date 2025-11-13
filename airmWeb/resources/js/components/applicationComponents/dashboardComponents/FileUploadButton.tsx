@@ -19,52 +19,68 @@ export default function InputFileUpload() {
   // Create a state to hold the selected files
   const [selectedFiles, setSelectedFiles] = useState<string[] | any>(null);
 
-  // I don't know why event data type is so weird - I HATE REACT I HATE TYPESCRIPT
-  const handleFileChange = (event: { target: { files: any; }; }) => {
-    // When files are selected, update the state
-    setSelectedFiles(event.target.files);
-    console.log(event.target.files); // You can still log them
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFiles) {
-      alert("Please select files first!");
-      return;
-    }
-    
-    // This is where you will send the files to the server
-    // (See Step 2 below)
-    console.log("Uploading:", selectedFiles);
-
-    // 1. Create a FormData object
-    const formData = new FormData();
-
-    // 2. Append each file to the FormData object
-    // The key 'files[]' is important for Laravel to recognize it as an array of files
-    for (let i = 0; i < selectedFiles.length; i++) 
-    {
-      formData.append('files[]', selectedFiles[i]);
-    }
-
+  /**
+   * This function is called by handleFileChange.
+   * Sends the filename to your Laravel backend.
+   * 
+   * The file will be posted to routes/api.php
+   * 
+   * Check the routes in routes/api.php
+   */
+  const saveDocumentMetadata = async (fileName: string) => {
     try {
-      // 3. Use fetch to send the form data to your Laravel backend
-      const response = await fetch('/api/upload', { // Your Laravel API endpoint
+      // The data we want to send, formatted as a JavaScript object
+      const documentData = {
+        document_name: fileName,
+      };
+
+      // Use fetch to send a POST request to our new Laravel endpoint
+      const response = await fetch('/documents/save-metadata', {
         method: 'POST',
-        body: formData,
-        // Headers are often set automatically by the browser when sending FormData
+        headers: {
+          // Tell the server we are sending JSON data
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
+          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+        },
+        body: JSON.stringify(documentData), // Convert the JS object to a JSON string
       });
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
+      if (!response.ok) 
+      {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save document metadata.');
       }
 
       const result = await response.json();
-      console.log('Success:', result);
-      alert('Files uploaded successfully!');
+      console.log('Success:', result.message);
+      alert('Document record saved!');
 
     } catch (error) {
-      console.error('Error uploading files:', error);
-      alert('Error uploading files.');
+      console.error('Error saving document:', error);
+      alert('Error: Could not save the document record.');
+    }
+  };
+
+  /**
+   * handleFileChange runs when a file is uploaded
+   * 
+   * I don't know why event data type is so weird - I HATE REACT I HATE TYPESCRIPT
+   * @param event 
+   */
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    setSelectedFiles(event.target.files);
+    console.log(event.target.files); // You can still log them
+
+    if (files && files.length > 0) {
+      // We'll just process the first file for this example
+      const firstFile = files[0];
+      console.log('File selected:', firstFile.name);
+
+      // Immediately call the function to save the metadata to the backend
+      saveDocumentMetadata(firstFile.name);
     }
   };
 
@@ -79,7 +95,8 @@ export default function InputFileUpload() {
       Upload files
       <VisuallyHiddenInput
         type="file"
-        onChange={(event) => console.log(event.target.files)}
+        accept=".csv, text/csv"
+        onChange={handleFileChange}
         multiple
       />
     </Button>
