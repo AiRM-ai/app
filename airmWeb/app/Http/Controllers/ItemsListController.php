@@ -57,4 +57,20 @@ class ItemsListController extends Controller
             'message' => 'Item added successfully!',
         ], 201);
     }
+
+    public function deleteItem(Request $delete)
+    {
+        // model
+        $items = new ItemList();
+
+        $data = $items::find($delete); 
+
+        $items::where('id', $delete)->first();
+        $data->delete();
+
+        // Success! weifuewhfuow yay!
+        return response()->json([
+            'message' => 'Item deleted successfully!',
+        ], 201);
+    }
 }
