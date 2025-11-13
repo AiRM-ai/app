@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
@@ -6,12 +7,18 @@ import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
+import Fab from '@mui/material/Fab';
+import AddIcon from '@mui/icons-material/Add';
 import TableHead from '@mui/material/TableHead';
+import TextField from '@mui/material/TextField';
 import TableRow from '@mui/material/TableRow';
+import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { Dialog, DialogContent, DialogTitle, DialogActions } from '@mui/material';
+import { Button } from '@mui/material';
 
 function createData(
   name: string,
@@ -41,6 +48,95 @@ function createData(
       },
     ],
   };
+}
+
+function AddItemInputForm({ open, handleClose }) 
+{
+  // FOR FORM DATA + verification if all required fields are there or not
+  const [formData, setFormData] = useState({
+    itemName: '',
+    description: '',
+  });
+
+
+  const currencies = [
+    {
+      value: 'USD',
+      label: '$',
+    },
+    {
+      value: 'EUR',
+      label: '€',
+    },
+    {
+      value: 'JPY',
+      label: '¥',
+    },
+  ];
+
+  return (
+    <Dialog open={open} onClose={handleClose}>
+      <DialogTitle>Add New Item</DialogTitle>
+      <DialogContent>
+        <Box
+          component="form"
+          sx={{ '& .MuiTextField-root': { m: 1, width: '25ch' }, flexDirection: "row" }}
+          noValidate
+          autoComplete="off"
+        >
+          <div>
+            <TextField
+              required
+              id="filled-required"
+              label="Item Name"
+              defaultValue=""
+              variant="filled"
+            />
+            <TextField
+              id="filled-description"
+              label="Description"
+              defaultValue=""
+              variant="filled"
+            />
+            <TextField
+              id="filled-required"
+              label="Item Price"
+              defaultValue=""
+              variant="filled"
+              type="number"
+            />
+            <TextField
+              id="filled-required"
+              label="Item Stock"
+              defaultValue=""
+              variant="filled"
+              type="number"
+              slotProps = {{ htmlInput: {step: 1,}, }}
+            />
+            <TextField
+              id="filled-select-currency"
+              select
+              label="Select"
+              defaultValue="JPY"
+              helperText="Please select your currency"
+              variant="filled"
+            >
+              {currencies.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+            
+          </div>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose}>Cancel</Button>
+        <Button onClick={handleClose}>Add</Button>
+      </DialogActions>
+    </Dialog>
+  );
 }
 
 function Row(props: { row: ReturnType<typeof createData> }) {
@@ -112,26 +208,51 @@ const rows = [
   createData('Cupcake', 305, 3.7, 67, 4.3, 2.5),
   createData('Gingerbread', 356, 16.0, 49, 3.9, 1.5),
 ];
-export default function CollapsibleTable() {
+export default function CollapsibleTable() 
+{
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   return (
-    <TableContainer component={Paper}>
-      <Table aria-label="collapsible table">
-        <TableHead>
-          <TableRow>
-            <TableCell />
-            <TableCell>Dessert (100g serving)</TableCell>
-            <TableCell align="right">Calories</TableCell>
-            <TableCell align="right">Fat&nbsp;(g)</TableCell>
-            <TableCell align="right">Carbs&nbsp;(g)</TableCell>
-            <TableCell align="right">Protein&nbsp;(g)</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row) => (
-            <Row key={row.name} row={row} />
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <div>
+      <TableContainer component={Paper}>
+        <Table aria-label="collapsible table">
+          <TableHead>
+            <TableRow>
+              <TableCell />
+              <TableCell>Dessert (100g serving)</TableCell>
+              <TableCell align="right">Calories</TableCell>
+              <TableCell align="right">Fat&nbsp;(g)</TableCell>
+              <TableCell align="right">Carbs&nbsp;(g)</TableCell>
+              <TableCell align="right">Protein&nbsp;(g)</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => (
+              <Row key={row.name} row={row} />
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* FLOATING ACTION BUTTON FOR INPUT (ADDING ITEM) */}
+      <Fab
+        color="primary"
+        aria-label="add"
+        onClick={handleClickOpen}
+        sx={{ position: 'absolute', bottom: 16, right: 16 }}
+      >
+        <AddIcon />
+      </Fab>
+
+      <AddItemInputForm open={open} handleClose={handleClose} />
+    </div>
   );
 }
