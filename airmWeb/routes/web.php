@@ -62,11 +62,20 @@ Route::get('/app', function ()
 
 // --------------------------------
 // API ROUTES
+
+// FILES:
 // For File Upload
 Route::post('/documents/save-metadata', [ImportedDocumentsController::class, 'storeDocumentData'])->middleware('auth', 'verified');
+// For fetching files (by user)
+Route::get('/documents/fetch-documents-by-user', [ImportedDocumentsController::class, 'fetchDocumentsByUser'])->middleware('auth', 'verified');
 
+// ITEMS:
 // For adding items
 Route::post('/data/add-item', [ItemsListController::class, 'addItem'])->middleware('auth', 'verified');
+// For deleting items
+Route::post('data/delete-item', [ItemsListController::class, 'deleteItem'])->middleware('auth', 'verified');
+// For fetching/getting items (also by user obv)
+Route::get('/data/get-items-by-user', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
 
 // --------------------------------
 

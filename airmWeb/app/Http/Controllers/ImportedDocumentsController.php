@@ -25,7 +25,7 @@ class ImportedDocumentsController extends Controller
         $documentsByUser = ImportedDocuments::where("username", $username)->get();
 
         // Return a view (and pass parameters to this view)
-        return ($documentsByUser);
+        return (json_encode($documentsByUser));
     }
 
     /**
