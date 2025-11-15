@@ -3,6 +3,10 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+// My Controllers:
+use App\Http\Controllers\ImportedDocumentsController;
+use App\Http\Controllers\ItemsListController;
+
 // NOTES
 // return view("folderName.viewName");
 // tells php to return the view from resources/views/folderName/viewName
@@ -51,10 +55,27 @@ Route::middleware('auth')->group(function ()
 
 // --------------------------------
 // APPLICATION ROUTES
-Route::get('/app', function () # 
+Route::get('/app', function () 
 {
     return view('application.applicationDashboard');
 })->middleware(['auth', 'verified'])->name('application.applicationDashboard');
+
+// --------------------------------
+// API ROUTES
+
+// FILES:
+// For File Upload
+Route::post('/documents/save-metadata', [ImportedDocumentsController::class, 'storeDocumentData'])->middleware('auth', 'verified');
+// For fetching files (by user)
+Route::get('/documents/fetch-documents-by-user', [ImportedDocumentsController::class, 'fetchDocumentsByUser'])->middleware('auth', 'verified');
+
+// ITEMS:
+// For adding items
+Route::post('/data/add-item', [ItemsListController::class, 'addItem'])->middleware('auth', 'verified');
+// For deleting items
+Route::post('data/delete-item', [ItemsListController::class, 'deleteItem'])->middleware('auth', 'verified');
+// For fetching/getting items (also by user obv)
+Route::get('/data/get-items-by-user', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
 
 // --------------------------------
 

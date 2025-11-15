@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    {{-- CSRF Token for web.php and routes, it's for security --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <title>Application Dashboard</title>
 
