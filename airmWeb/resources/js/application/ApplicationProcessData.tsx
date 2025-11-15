@@ -13,6 +13,7 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import { Typography } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 
 // Components from resources/js/components/applicationComponents/dashboardComponents
 import ApplicationTopBar from "../components/applicationComponents/dashboardComponents/ApplicationTopBar";
@@ -55,6 +56,7 @@ const columns: readonly Column[] = [
 // interface for data record
 interface Data 
 {
+  username: string;
   document_name: string;
   imported_date: string;
   imported_time: string;
@@ -67,7 +69,7 @@ function createData(
     imported_date: string,
     imported_time: string,
 ): Data {
-    return { document_name, imported_date, imported_time };
+    return { username, document_name, imported_date, imported_time };
 }
 
 // TEST DATA
@@ -109,19 +111,84 @@ const rows = [
   createData('Germany', 'DE', "83019200", "357578"),
 ];
 
-// Fetch records by user
-const response = await fetch('/documents/fetch-documents-by-user', {
-    method: 'GET',
-    headers: {
-        // Tell the server we are sending JSON data
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
-        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-    },
-});
+export function useFetchAndProcessData()
+{
+  const [rows, setRows] = useState([]);
+  const [documents, setDocuments] = useState([]);    
+  
+  // we stiilll loading the data fam?
+  const [isLoading, setIsLoading] = useState(true);
 
-console.log(response);
+  useEffect(() => {
+
+    // Fetch records by user
+    async function fetchData()
+    {
+      try 
+      {
+        const response = await fetch('/documents/fetch-documents-by-user', {
+          method: 'GET',
+          headers: {
+            // Tell the server we are sending JSON data
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+        },
+        })
+
+        if (!response.ok)
+        {
+          throw new Error("HTTPS ERROR! Status: ${response.status}");
+        }
+
+        const documents = await response.json();
+        //console.log("DOCUMENTS: " + documents);
+
+        if (Array.isArray(documents))
+        {
+          const processedRows = documents.map(item => 
+          {
+            //const importDateTime = new Date(item.imported_time);
+            //const formattedDate = importDateTime.toLocaleDateString();
+            //const formattedTime = importDateTime.toLocaleTimeString();
+
+            console.log(item.imported_time);
+
+            // Call your function with the values from each item
+            return createData(
+              item.username,
+              item.document_name,
+              item.imported_date,
+              item.imported_time,
+            );
+          });
+
+          setRows(processedRows);
+        }
+        else 
+        {
+          console.error("Invalid data received:", documents);
+        }
+      }
+      catch (error)
+      {
+        console.error("Failed to fetch data:" + error);
+      }
+      finally 
+      {
+        setIsLoading(false);
+      }
+    }  
+
+    fetchData();
+
+  }, []);
+
+  
+
+  return { rows, isLoading }; 
+};
 
 function DocumentHistoryTable() 
 {
@@ -136,6 +203,14 @@ function DocumentHistoryTable()
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
+
+  // Call data process function
+  const { rows, isLoading } = useFetchAndProcessData();
+
+  if (isLoading)
+  {
+    return <CircularProgress />;
+  }
 
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -162,7 +237,7 @@ function DocumentHistoryTable()
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
                     {columns.map((column) => {
                       const value = row[column.id];
-                      return (
+                      return ( 
                         <TableCell key={column.id} align={column.align}>
                           {column.format && typeof value === 'number'
                             ? column.format(value)
@@ -221,7 +296,7 @@ const ApplicationProcessData: FC = () =>
             <Typography variant="h4" component="h4" sx={{ color:"black", }}>
                 Document History
             </Typography>
-            { DocumentHistoryTable() }
+            <DocumentHistoryTable />
         </div>
     );
 }
