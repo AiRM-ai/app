@@ -143,24 +143,25 @@ export function useFetchAndProcessData()
         }
 
         const documents = await response.json();
-        //console.log("DOCUMENTS: " + documents);
+        console.log("DOCUMENTS: " + documents);
 
         if (Array.isArray(documents))
         {
           const processedRows = documents.map(item => 
           {
-            //const importDateTime = new Date(item.imported_time);
-            //const formattedDate = importDateTime.toLocaleDateString();
-            //const formattedTime = importDateTime.toLocaleTimeString();
+            //console.log("Date and time:");
+            //console.log(item.created_at);
+            //console.log(item.updated_at);
 
-            console.log(item.imported_time);
+            const importDateAndTime = new Date(item.created_at);
+            const updateDateAndTime = new Date(item.updated_at);
 
             // Call your function with the values from each item
             return createData(
               item.username,
               item.document_name,
-              item.imported_date,
-              item.imported_time,
+              importDateAndTime.toLocaleDateString() + ", " + importDateAndTime.toLocaleTimeString(),
+              updateDateAndTime.toLocaleDateString() + ", " + updateDateAndTime.toLocaleTimeString(),
             );
           });
 
