@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect, useRef, FC, KeyboardEvent, ChangeEvent } from 'react';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
@@ -17,44 +17,16 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { Dialog, DialogContent, DialogTitle, DialogActions } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress } from '@mui/material';
 import { Button } from '@mui/material';
-
-function createData(
-  name: string,
-  calories: number,
-  fat: number,
-  carbs: number,
-  protein: number,
-  price: number,
-) {
-  return {
-    name,
-    calories,
-    fat,
-    carbs,
-    protein,
-    price,
-    history: [
-      {
-        date: '2020-01-05',
-        customerId: '11091700',
-        amount: 3,
-      },
-      {
-        date: '2020-01-02',
-        customerId: 'Anonymous',
-        amount: 1,
-      },
-    ],
-  };
-}
 
 function AddItemInputForm({ open, handleClose }) 
 {
     const addItemToDatabase = async (formData: any) => {
       try 
       {
+        console.log(formData);
+
         // Use fetch to send a POST request to our new Laravel endpoint (in web.php)
         const response = await fetch('/data/add-item', {
           method: 'POST',
@@ -82,7 +54,7 @@ function AddItemInputForm({ open, handleClose })
       catch (error) 
       {
         console.error('Error adding item:', error);
-        alert('Error: Could add the item.');
+        alert('Error: Could not add the item.');
       }
   };
 
@@ -90,6 +62,7 @@ function AddItemInputForm({ open, handleClose })
   const [formData, setFormData] = useState({
     item_name: '',
     item_description: '',
+    item_category: '',
     item_price: '',
     item_stock: '',
     item_currency: 'JPY',
@@ -97,7 +70,8 @@ function AddItemInputForm({ open, handleClose })
 
   const [errors, setErrors] = useState({});
 
-  const handleChange = (event) => {
+  const handleChange = (event) => 
+    {
     const { name, value } = event.target;
     setFormData({
       ...formData,
@@ -105,7 +79,8 @@ function AddItemInputForm({ open, handleClose })
     });
 
     // Clear the specific error for the field being edited
-    if (errors[name]) {
+    if (errors[name]) 
+    {
       setErrors({
         ...errors,
         [name]: '',
@@ -113,9 +88,11 @@ function AddItemInputForm({ open, handleClose })
     }
   };
 
-  const validate = () => {
+  const validate = () => 
+  {
     let tempErrors = {};
     tempErrors.item_name = formData.item_name ? '' : 'This field is required.';
+    tempErrors.item_category = formData.item_category ? '' : 'This field is required.';
     tempErrors.item_price = formData.item_price ? '' : 'This field is required.';
     tempErrors.item_stock = formData.item_stock ? '' : 'This field is required.';
     setErrors(tempErrors);
@@ -129,10 +106,10 @@ function AddItemInputForm({ open, handleClose })
   {
     formData.item_name = '';
     formData.item_description = '';
+    formData.item_category = '';
     formData.item_stock = '';
     formData.item_price = '';
     formData.item_currency = 'JPY';
-
   }
 
   // FORM SUBMISSION!!--->
@@ -190,6 +167,17 @@ function AddItemInputForm({ open, handleClose })
               name="item_description"
               id="item_description"
               label="Item Description"
+              variant="filled"
+            />
+            <TextField
+              required
+              value={formData.item_category}
+              onChange={handleChange}
+              error={!!errors.item_category} // The `!!` converts the string to a boolean
+              helperText={errors.item_category}
+              name="item_category"
+              id="item_category"
+              label="Item Category"
               variant="filled"
             />
             <TextField
@@ -260,12 +248,13 @@ function Row(props: { row: ReturnType<typeof createData> }) {
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          {row.name}
+          {row.item_name}
         </TableCell>
-        <TableCell align="right">{row.calories}</TableCell>
-        <TableCell align="right">{row.fat}</TableCell>
-        <TableCell align="right">{row.carbs}</TableCell>
-        <TableCell align="right">{row.protein}</TableCell>
+        <TableCell align="right">{row.item_description}</TableCell>
+        <TableCell align="right">{row.item_category}</TableCell>
+        <TableCell align="right">{row.item_stock}</TableCell>
+        <TableCell align="right">{row.item_price}</TableCell>
+        <TableCell align="right">{row.item_currency}</TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -292,7 +281,7 @@ function Row(props: { row: ReturnType<typeof createData> }) {
                       <TableCell>{historyRow.customerId}</TableCell>
                       <TableCell align="right">{historyRow.amount}</TableCell>
                       <TableCell align="right">
-                        {Math.round(historyRow.amount * row.price * 100) / 100}
+                        {Math.round(historyRow.amount * row.item_price * 100) / 100}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -305,13 +294,125 @@ function Row(props: { row: ReturnType<typeof createData> }) {
     </React.Fragment>
   );
 }
+
+// FUNCTION to create a data item
+function createData(
+  item_name: string,
+  item_description: string,
+  item_category: string,
+  item_stock: number,
+  item_price: number,
+  item_currency: string,
+) {
+  return {
+    item_name,
+    item_description,
+    item_category,
+    item_stock,
+    item_price,
+    item_currency,
+    history: [
+      {
+        date: '2020-01-05',
+        customerId: '11091700',
+        amount: 2,
+      },
+      {
+        date: '2020-01-02',
+        customerId: 'Anonymous',
+        amount: 1,
+      },
+    ],
+  };
+}
+
+// TEST DATA
 const rows = [
-  createData('Frozen yoghurt', 159, 6.0, 24, 4.0, 3.99),
-  createData('Ice cream sandwich', 237, 9.0, 37, 4.3, 4.99),
-  createData('Eclair', 262, 16.0, 24, 6.0, 3.79),
-  createData('Cupcake', 305, 3.7, 67, 4.3, 2.5),
-  createData('Gingerbread', 356, 16.0, 49, 3.9, 1.5),
+  createData('Frozen yoghurt', "Greek yogurt that's forzen", "yogrutt", 24, 4.0, "DIN"),
+  createData('Ice cream sandwich', "237", "ts", 37, 4.3, "EUR"),
+  createData('Eclair', "262", "pmo", 24, 6.0, "JPY"),
+  createData('Cupcake', "305", "icl", 67, 4.3, "USD"),
+  createData('Gingerbread', "356", "fam", 49, 3.9, "INR"),
 ];
+
+
+// FUNCTION TO GET DATA FROM THE DATABASE/BACKEND
+
+export function useFetchAndProcessData()
+{
+  const [rows, setRows] = useState([]);
+  const [documents, setDocuments] = useState([]);    
+  
+  // we stiilll loading the data fam?
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+
+    // Fetch records by user
+    async function fetchData()
+    {
+      try 
+      {
+        const response = await fetch('/data/get-items-by-user', {
+            method: 'GET',
+            headers: {
+              // Tell the server we are sending JSON data
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
+              'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+          },
+        })
+
+        if (!response.ok)
+        {
+          throw new Error("HTTPS ERROR! Status: ${response.status}");
+        }
+
+        const items = await response.json();
+        console.log("ITEMS: " + items);
+
+        if (Array.isArray(documents))
+        {
+          const processedRows = items.map(item => 
+          {
+            // Call your function with the values from each item
+            return createData(
+              item.item_name,
+              item.item_description,
+              item.item_category,
+              item.item_stock,
+              item.item_price,
+              item.item_currency,
+            );
+          });
+
+          setRows(processedRows);
+        }
+        else 
+        {
+          console.error("Invalid data received:", items);
+        }
+      }
+      catch (error)
+      {
+        console.error("Failed to fetch data:" + error);
+      }
+      finally 
+      {
+        setIsLoading(false);
+      }
+    }  
+
+    fetchData();
+
+  }, []);
+
+  return { rows, isLoading }; 
+};
+
+
+// Function to show the actual table
 export default function CollapsibleTable() 
 {
   const [open, setOpen] = useState(false);
@@ -324,6 +425,14 @@ export default function CollapsibleTable()
     setOpen(false);
   };
 
+  // Call data process function
+  const { rows, isLoading } = useFetchAndProcessData();
+
+  if (isLoading)
+  {
+    return <CircularProgress />;
+  }
+
   return (
     <div>
       <TableContainer component={Paper}>
@@ -331,11 +440,12 @@ export default function CollapsibleTable()
           <TableHead>
             <TableRow>
               <TableCell />
-              <TableCell>Dessert (100g serving)</TableCell>
-              <TableCell align="right">Calories</TableCell>
-              <TableCell align="right">Fat&nbsp;(g)</TableCell>
-              <TableCell align="right">Carbs&nbsp;(g)</TableCell>
-              <TableCell align="right">Protein&nbsp;(g)</TableCell>
+              <TableCell>Item Name</TableCell>
+              <TableCell align="right">Item Description</TableCell>
+              <TableCell align="right">Item Category</TableCell>
+              <TableCell align="right">Item Stock</TableCell>
+              <TableCell align="right">Item Price</TableCell>
+              <TableCell align="right">Item Currency</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

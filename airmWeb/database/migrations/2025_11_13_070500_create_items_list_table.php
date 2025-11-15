@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string("username", length: 100);
             $table->string("item_name");
             $table->longText("item_description");
+            $table->string("item_category");
             $table->float("item_price");
             $table->integer("item_stock");
             $table->string("item_currency");

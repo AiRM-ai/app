@@ -35,6 +35,7 @@ class ItemsListController extends Controller
         $validated = $request->validate([
             'item_name' => 'required',
             'item_description' => 'nullable',
+            'item_category' => 'required',
             'item_price' => 'required',
             'item_stock' => 'required',
             'item_currency' => 'required'
@@ -48,6 +49,7 @@ class ItemsListController extends Controller
         $items->username = $username;
         $items->item_name = $validated['item_name'];
         $items->item_description = $validated['item_description'];
+        $items->item_category = $validated['item_category'];
         $items->item_price = $validated['item_price'];
         $items->item_stock = $validated['item_stock'];
         $items->item_currency = $validated['item_currency'];
