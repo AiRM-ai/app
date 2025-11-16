@@ -14,6 +14,8 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import { Typography } from '@mui/material';
 import { CircularProgress } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 // Components from resources/js/components/applicationComponents/dashboardComponents
 import ApplicationTopBar from "../components/applicationComponents/dashboardComponents/ApplicationTopBar";
@@ -46,10 +48,16 @@ const columns: readonly Column[] = [
   },
   {
     id: 'imported_time',
-    label: 'Time Imported',
+    label: 'Updated',
     minWidth: 170,
     align: 'center',
     format: (value: number) => value.toLocaleString('en-US'),
+  },
+  {
+    id: 'check_result',
+    label: 'Check Result',
+    minWidth: 170,
+    align: 'center',
   },
 ];
 
@@ -236,7 +244,9 @@ function DocumentHistoryTable()
               .map((row) => {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                    {columns.map((column) => {
+                    {columns
+                    .filter(column => column.id !== 'check_result') 
+                    .map((column) => {
                       const value = row[column.id];
                       return ( 
                         <TableCell key={column.id} align={column.align}>
@@ -246,6 +256,11 @@ function DocumentHistoryTable()
                         </TableCell>
                       );
                     })}
+                    <TableCell key="check_result" align="center">
+                      <IconButton aria-label="delete">
+                        <ExitToAppIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 );
               })}

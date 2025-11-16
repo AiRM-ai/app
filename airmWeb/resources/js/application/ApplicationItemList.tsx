@@ -250,7 +250,6 @@ function Row(props: { row: ReturnType<typeof createData> }) {
         <TableCell component="th" scope="row">
           {row.item_name}
         </TableCell>
-        <TableCell align="right">{row.item_description}</TableCell>
         <TableCell align="right">{row.item_category}</TableCell>
         <TableCell align="right">{row.item_stock}</TableCell>
         <TableCell align="right">{row.item_price}</TableCell>
@@ -261,30 +260,16 @@ function Row(props: { row: ReturnType<typeof createData> }) {
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               <Typography variant="h6" gutterBottom component="div">
-                History
+                Item Details
               </Typography>
               <Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="right">Total price ($)</TableCell>
+                    <TableCell>Item Description</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row.history.map((historyRow) => (
-                    <TableRow key={historyRow.date}>
-                      <TableCell component="th" scope="row">
-                        {historyRow.date}
-                      </TableCell>
-                      <TableCell>{historyRow.customerId}</TableCell>
-                      <TableCell align="right">{historyRow.amount}</TableCell>
-                      <TableCell align="right">
-                        {Math.round(historyRow.amount * row.item_price * 100) / 100}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableCell align="left">{row.item_description}</TableCell>
                 </TableBody>
               </Table>
             </Box>
@@ -441,7 +426,6 @@ export default function CollapsibleTable()
             <TableRow>
               <TableCell />
               <TableCell>Item Name</TableCell>
-              <TableCell align="right">Item Description</TableCell>
               <TableCell align="right">Item Category</TableCell>
               <TableCell align="right">Item Stock</TableCell>
               <TableCell align="right">Item Price</TableCell>

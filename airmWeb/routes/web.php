@@ -77,6 +77,7 @@ Route::post('data/delete-item', [ItemsListController::class, 'deleteItem'])->mid
 // For fetching/getting items (also by user obv)
 Route::get('/data/get-items-by-user', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
 
+
 // --------------------------------
 
 require __DIR__.'/auth.php';
