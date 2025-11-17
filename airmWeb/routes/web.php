@@ -63,6 +63,8 @@ Route::get('/app', function ()
 // --------------------------------
 // API ROUTES
 
+Route::post('/model/prediction', [ItemsListController::class, 'addItem'])->middleware('auth', 'verified');
+Route::get('/model/get-prediction', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
 // FILES:
 // For File Upload
 Route::post('/documents/save-metadata', [ImportedDocumentsController::class, 'storeDocumentData'])->middleware('auth', 'verified');
