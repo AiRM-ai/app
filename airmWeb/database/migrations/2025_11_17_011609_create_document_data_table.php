@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('imported_documents', function (Blueprint $table) {
+        Schema::create('document_data', function (Blueprint $table) {
             $table->id();
-            $table->string("username", length: 100);
-            $table->longText("document_name");
-            $table->longText("file");
-            $table->longText("file_path");
+            $table->string("username");
+            $table->string("document_name");
+            $table->longText("document_data");
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('imported_documents');
+        Schema::dropIfExists('document_data');
     }
 };

@@ -31,7 +31,7 @@ export default function InputFileUpload() {
     try {
       // The data we want to send, formatted as a JavaScript object
       const documentData = {
-        document_name: fileName,
+        file: fileName,
       };
 
       // Use fetch to send a POST request to our new Laravel endpoint
@@ -57,7 +57,9 @@ export default function InputFileUpload() {
       console.log('Success:', result.message);
       alert('Document record saved!');
 
-    } catch (error) {
+    } 
+    catch (error) 
+    {
       console.error('Error saving document:', error);
       alert('Error: Could not save the document record.');
     }
@@ -69,12 +71,14 @@ export default function InputFileUpload() {
    * I don't know why event data type is so weird - I HATE REACT I HATE TYPESCRIPT
    * @param event 
    */
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => 
+  {
     const files = event.target.files;
     setSelectedFiles(event.target.files);
     console.log(event.target.files); // You can still log them
 
-    if (files && files.length > 0) {
+    if (files && files.length > 0) 
+    {
       // We'll just process the first file for this example
       const firstFile = files[0];
       console.log('File selected:', firstFile.name);
