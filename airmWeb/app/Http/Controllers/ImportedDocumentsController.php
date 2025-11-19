@@ -10,6 +10,38 @@ use Illuminate\Support\Facades\Auth;
 
 class ImportedDocumentsController extends Controller
 {
+    public function fetchFilePathByRowId(Request $request)
+    {
+        // Validate request
+        $validated = $request->validate([
+            'id' => 'required',
+        ]);
+        
+        $rowId = $request->id;
+
+        // Make an eloquent
+        $rowById = ImportedDocuments::where("username", $rowId)->select("file_path")->get();
+
+        // Return a view (and pass parameters to this view)
+        return (json_encode($rowById));
+    }
+
+    public function fetchRowByUser(Request $request)
+    {
+        // validate request
+        $validated = $request->validate([
+            'id' => 'required', 
+        ]);
+
+        $id = $request->id;
+        
+        // Make an eloquent
+        $rowById = ImportedDocuments::where("username", $id)->get();
+
+        // Return a view (and pass parameters to this view)
+        return (json_encode($rowById));
+    }
+
     public function fetchDocumentsByUser()
     {
         // Get the user object

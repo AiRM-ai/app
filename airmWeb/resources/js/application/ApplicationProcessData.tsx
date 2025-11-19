@@ -17,13 +17,16 @@ import { CircularProgress } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
+// For CSV Parsing
+import Papa from "papaparse"; 
+
 // Components from resources/js/components/applicationComponents/dashboardComponents
 import ApplicationTopBar from "../components/applicationComponents/dashboardComponents/ApplicationTopBar";
 import TabLayout from "../components/applicationComponents/dashboardComponents/TabLayout";
 import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
 
 interface Column {
-  id: 'username' | 'file_name' | 'imported_date' | 'imported_time';
+  id: 'username' | 'file_name' | 'imported_date' | 'imported_time' | 'check_result';
   label: string;
   minWidth?: number;
   align?: 'center';
@@ -64,6 +67,7 @@ const columns: readonly Column[] = [
 // interface for data record
 interface Data 
 {
+  document_id: string;
   username: string;
   file_name: string;
   imported_date: string;
@@ -72,52 +76,14 @@ interface Data
 
 // create a data record
 function createData(
+    document_id: string,
     username: string,
     file_name: string,
     imported_date: string,
     imported_time: string,
 ): Data {
-    return { username, file_name, imported_date, imported_time };
+    return { document_id, username, file_name, imported_date, imported_time };
 }
-
-// TEST DATA
-const rows = [
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-];
 
 export function useFetchAndProcessData()
 {
@@ -151,21 +117,20 @@ export function useFetchAndProcessData()
         }
 
         const documents = await response.json();
+        setDocuments(documents);
         //console.log("DOCUMENTS: " + documents);
 
         if (Array.isArray(documents))
         {
           const processedRows = documents.map(item => 
           {
-            //console.log("Date and time:");
-            //console.log(item.created_at);
-            //console.log(item.updated_at);
-
+            // Format Date accordingly
             const importDateAndTime = new Date(item.created_at);
             const updateDateAndTime = new Date(item.updated_at);
 
             // Call your function with the values from each item
             return createData(
+              item.id,
               item.username,
               item.file_name,
               importDateAndTime.toLocaleDateString() + ", " + importDateAndTime.toLocaleTimeString(),
@@ -194,13 +159,84 @@ export function useFetchAndProcessData()
 
   }, []);
 
-  
-
   return { rows, isLoading }; 
 };
 
+/**
+ * FUNCTION to handle viewing the CSV file!
+ */
+export function handleClickViewDocument(rowId: string)
+{
+  // For file path from database
+  const [ filePath, setFilePath ] = useState([]);
+  // FOR CSV FILE CONTENT
+  const [ csvContent, setCsvContent ] = useState([]);
+
+  // Get the document id in the MYSQL table using rowID (frontend table)
+  useEffect(() => 
+    {
+      async function fetchRowById()
+      {
+        try 
+        {
+          const response = await fetch('/documents/fetch-file-path-by-row-id', {
+            method: 'GET',
+            headers: {
+              // Tell the server we are sending JSON data
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
+              'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+          },
+          })
+
+          if (!response.ok)
+          {
+            throw new Error("HTTPS ERROR! Status: ${response.status}");
+          }
+
+          // convert to json and send
+          const filePath = await response.json();
+          setFilePath(filePath);
+        }
+        catch (error)
+        {
+          console.error("Failed to fetch data:" + error);
+        }
+      }
+    }, []
+  );
+  
+  // FETCH the CSV FILE from the public folder obv
+  useEffect(() => 
+    {
+      const loadCsvData = function() 
+      {
+        fetch('./' + filePath)
+        .then(response => response.text())
+        .then(responseText => 
+          {
+            setCsvContent(responseText);
+          }
+        )
+      };
+    }, []
+  );
+
+  
+
+  console.log("CSV Content Extracted: ");
+  console.log(csvContent);
+
+  // Parse CSV and send to the DataViewer react View
+  Papa.parse();
+}
+
+
+
 function DocumentHistoryTable() 
 {
+  // For Displaying the table - came with the react component idk what they're being used for pls forgive me onegai
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
@@ -241,26 +277,40 @@ function DocumentHistoryTable()
           <TableBody>
             {rows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => {
+              .map((row) => 
+              {
+                const document_id = null;
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                    {columns
-                    .filter(column => column.id !== 'check_result') 
-                    .map((column) => {
+                    {
+                    columns
+                    .map((column) => 
+                    {
                       const value = row[column.id];
-                      return ( 
-                        <TableCell key={column.id} align={column.align}>
-                          {column.format && typeof value === 'number'
-                            ? column.format(value)
-                            : value}
-                        </TableCell>
-                      );
+                      if (column.id === "check_result")
+                      {
+                        // BUTTON to check document result
+                        return (
+                          <TableCell key="check_result" align="center">
+                            {/* () => function() makes it so that it's called when the comp/button is CLICKED */}
+                            {/* function() makes it so that the function is called as soon as it's rendered */}
+                            <IconButton aria-label="delete" onClick={() => handleClickViewDocument(row.document_id)}>
+                              <ExitToAppIcon />
+                            </IconButton>
+                          </TableCell>
+                        );
+                      }
+                      else 
+                      {
+                        return ( 
+                          <TableCell key={column.id} align={column.align}>
+                            {column.format && typeof value === 'number'
+                              ? column.format(value)
+                              : value}
+                          </TableCell>
+                        );
+                      }
                     })}
-                    <TableCell key="check_result" align="center">
-                      <IconButton aria-label="delete">
-                        <ExitToAppIcon />
-                      </IconButton>
-                    </TableCell>
                   </TableRow>
                 );
               })}
