@@ -165,7 +165,7 @@ export function useFetchAndProcessData()
 /**
  * FUNCTION to handle viewing the CSV file!
  */
-export function handleClickViewDocument(rowId: string)
+export function useHandleClickViewDocument(rowId: string)
 {
   // For file path from database
   const [ filePath, setFilePath ] = useState([]);
@@ -204,7 +204,7 @@ export function handleClickViewDocument(rowId: string)
           console.error("Failed to fetch data:" + error);
         }
       }
-    }, []
+    }, [rowId] // [rowId] here means this effect will rerun only when rowId changes
   );
   
   // FETCH the CSV FILE from the public folder obv
@@ -220,16 +220,16 @@ export function handleClickViewDocument(rowId: string)
           }
         )
       };
-    }, []
+    }, [filePath] // [filePath] means this effect will rerun only when filePath changes
   );
-
-  
 
   console.log("CSV Content Extracted: ");
   console.log(csvContent);
 
   // Parse CSV and send to the DataViewer react View
   Papa.parse();
+
+  return { csvContent, filePath };
 }
 
 
@@ -294,7 +294,7 @@ function DocumentHistoryTable()
                           <TableCell key="check_result" align="center">
                             {/* () => function() makes it so that it's called when the comp/button is CLICKED */}
                             {/* function() makes it so that the function is called as soon as it's rendered */}
-                            <IconButton aria-label="delete" onClick={() => handleClickViewDocument(row.document_id)}>
+                            <IconButton aria-label="delete" onClick={() => useHandleClickViewDocument(row.document_id)}>
                               <ExitToAppIcon />
                             </IconButton>
                           </TableCell>
