@@ -14,8 +14,7 @@ return new class extends Migration
         Schema::create('imported_documents', function (Blueprint $table) {
             $table->id();
             $table->string("username", length: 100);
-            $table->longText("document_name");
-            $table->longText("file");
+            $table->longText("file_name");
             $table->longText("file_path");
             $table->timestamps();
         });

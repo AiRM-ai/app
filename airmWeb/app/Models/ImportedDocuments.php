@@ -23,8 +23,7 @@ class ImportedDocuments extends Model
      */
     protected $fillable = [
         'username',
-        'document_name', 
-        'file', 
+        'file_name', 
         'file_path',
     ];
 }

@@ -23,7 +23,7 @@ import TabLayout from "../components/applicationComponents/dashboardComponents/T
 import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
 
 interface Column {
-  id: 'username' | 'document_name' | 'imported_date' | 'imported_time';
+  id: 'username' | 'file_name' | 'imported_date' | 'imported_time';
   label: string;
   minWidth?: number;
   align?: 'center';
@@ -33,8 +33,8 @@ interface Column {
 const columns: readonly Column[] = [
   { id: 'username', label: 'User', minWidth: 10 },
   {
-    id: 'document_name',
-    label: 'Document Name',
+    id: 'file_name',
+    label: 'File Name',
     minWidth: 170,
     align: 'center',
     format: (value: number) => value.toLocaleString('en-US'),
@@ -65,7 +65,7 @@ const columns: readonly Column[] = [
 interface Data 
 {
   username: string;
-  document_name: string;
+  file_name: string;
   imported_date: string;
   imported_time: string;
 }
@@ -73,11 +73,11 @@ interface Data
 // create a data record
 function createData(
     username: string,
-    document_name: string,
+    file_name: string,
     imported_date: string,
     imported_time: string,
 ): Data {
-    return { username, document_name, imported_date, imported_time };
+    return { username, file_name, imported_date, imported_time };
 }
 
 // TEST DATA
@@ -151,7 +151,7 @@ export function useFetchAndProcessData()
         }
 
         const documents = await response.json();
-        console.log("DOCUMENTS: " + documents);
+        //console.log("DOCUMENTS: " + documents);
 
         if (Array.isArray(documents))
         {
@@ -167,7 +167,7 @@ export function useFetchAndProcessData()
             // Call your function with the values from each item
             return createData(
               item.username,
-              item.document_name,
+              item.file_name,
               importDateAndTime.toLocaleDateString() + ", " + importDateAndTime.toLocaleTimeString(),
               updateDateAndTime.toLocaleDateString() + ", " + updateDateAndTime.toLocaleTimeString(),
             );

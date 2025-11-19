@@ -41,7 +41,7 @@ class ImportedDocumentsController extends Controller
         // This is a crucial security step. It ensures the 'document_name'
         // field exists, is a string, and isn't excessively long.
         $validated = $request->validate([
-            'file' => 'required|fillable|mimes:csv,text|max:2048', // to store the actual file
+            'file' => 'required|file|mimes:csv,text|max:2048', // for the actual file
         ]);
 
         // Get the currently authenticated user
@@ -72,8 +72,7 @@ class ImportedDocumentsController extends Controller
 
             $document =                     new ImportedDocuments();
             $document->username =           $username; // Get username from the logged-in user
-            $document->document_name =      $file_name; // Use the validated name
-            $document->file =               $validated['file']; // for entire file
+            $document->file_name =          $file_name; // Use the validated name
             $document->file_path =          $file_path;  // for the path where it was stored
 
             // Save the record to the database:
