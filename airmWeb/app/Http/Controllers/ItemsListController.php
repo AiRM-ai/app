@@ -10,6 +10,22 @@ use App\Models\ItemList;
 
 class ItemsListController extends Controller
 {
+    public function fetchItemRowByItemId(Request $request)
+    {
+        // get the id from the req
+        $itemRowId = $request->input("id");
+
+        if (!$itemRowId)
+        {
+            return response()->json(["error" => "ID is missing"], 400);
+        }
+
+        // eloquent for doc
+        $itemRow = ItemList::where("id", $itemRowId);
+
+        return (json_encode($itemRow));
+    }
+    
     // to get all the items that a user added:
     public function fetchItemsByUser()
     {

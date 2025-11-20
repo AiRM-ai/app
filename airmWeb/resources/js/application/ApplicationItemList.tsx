@@ -19,6 +19,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress } from '@mui/material';
 import { Button } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete'; 
 
 function AddItemInputForm({ open, handleClose }) 
 {
@@ -113,7 +114,8 @@ function AddItemInputForm({ open, handleClose })
   }
 
   // FORM SUBMISSION!!--->
-  const handleSubmit = () => {
+  const handleSubmit = () => 
+  {
     if (validate()) 
     {
       // Proceed with form submission logic
@@ -124,6 +126,7 @@ function AddItemInputForm({ open, handleClose })
     }
   };
 
+  // FOR all the possible currencies
   const currencies = [
     {
       value: 'USD',
@@ -254,6 +257,14 @@ function Row(props: { row: ReturnType<typeof createData> }) {
         <TableCell align="right">{row.item_stock}</TableCell>
         <TableCell align="right">{row.item_price}</TableCell>
         <TableCell align="right">{row.item_currency}</TableCell>
+        <TableCell align="center">
+            <IconButton 
+                aria-label="delete-item" 
+                color="error" // Makes it red
+            >
+                <DeleteIcon />
+            </IconButton>
+        </TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -288,6 +299,7 @@ function createData(
   item_stock: number,
   item_price: number,
   item_currency: string,
+  item_id: string,
 ) {
   return {
     item_name,
@@ -296,6 +308,7 @@ function createData(
     item_stock,
     item_price,
     item_currency,
+    item_id,
     history: [
       {
         date: '2020-01-05',
@@ -313,11 +326,11 @@ function createData(
 
 // TEST DATA
 const rows = [
-  createData('Frozen yoghurt', "Greek yogurt that's forzen", "yogrutt", 24, 4.0, "DIN"),
-  createData('Ice cream sandwich', "237", "ts", 37, 4.3, "EUR"),
-  createData('Eclair', "262", "pmo", 24, 6.0, "JPY"),
-  createData('Cupcake', "305", "icl", 67, 4.3, "USD"),
-  createData('Gingerbread', "356", "fam", 49, 3.9, "INR"),
+  createData('Frozen yoghurt', "Greek yogurt that's forzen", "yogrutt", 24, 4.0, "DIN", "1"),
+  createData('Ice cream sandwich', "237", "ts", 37, 4.3, "EUR", "2"),
+  createData('Eclair', "262", "pmo", 24, 6.0, "JPY", "3"),
+  createData('Cupcake', "305", "icl", 67, 4.3, "USD", "4"),
+  createData('Gingerbread', "356", "fam", 49, 3.9, "INR", "5"),
 ];
 
 
@@ -331,21 +344,24 @@ export function useFetchAndProcessData()
   // we stiilll loading the data fam?
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(() => 
+  {
 
     // Fetch records by user
     async function fetchData()
     {
       try 
       {
-        const response = await fetch('/data/get-items-by-user', {
-            method: 'GET',
-            headers: {
-              // Tell the server we are sending JSON data
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
-              'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+        const response = await fetch('/data/get-items-by-user', 
+        {
+          method: 'GET',
+          headers: 
+          {
+            // Tell the server we are sending JSON data
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
           },
         })
 
@@ -369,6 +385,7 @@ export function useFetchAndProcessData()
               item.item_stock,
               item.item_price,
               item.item_currency,
+              item.id,
             );
           });
 
@@ -410,6 +427,21 @@ export default function CollapsibleTable()
     setOpen(false);
   };
 
+  // For deleting item
+  const handleDeleteItemClick = (id: string) => 
+  {
+    if(confirm("Are you sure you want to delete this item?")) 
+    {
+        console.log("Deleting item with ID:", id);
+        
+        // TODO: Call your API here to delete
+        // await fetch('/data/delete-item', { method: 'POST', body: JSON.stringify({ id }) ... });
+        
+        // TODO: Update your 'rows' state here to remove it from the screen
+
+    }
+  };
+
   // Call data process function
   const { rows, isLoading } = useFetchAndProcessData();
 
@@ -430,12 +462,16 @@ export default function CollapsibleTable()
               <TableCell align="right">Item Stock</TableCell>
               <TableCell align="right">Item Price</TableCell>
               <TableCell align="right">Item Currency</TableCell>
+              <TableCell align="center">Delete Item</TableCell> 
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
-              <Row key={row.name} row={row} />
-            ))}
+            {
+              rows.map((row) => (
+                <Row key={row.name} row={row}/>
+                // <Row key={row.name} row={row} onclick={handleDeleteItem} />
+              ))
+            }
           </TableBody>
         </Table>
       </TableContainer>
