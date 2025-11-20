@@ -42,7 +42,7 @@ export default function InputFileUpload() {
     try 
     {
       // Use fetch to send a POST request to our new Laravel endpoint
-      const response = await fetch('/documents/upload', {
+      const response = await fetch('api/documents/upload', {
         method: 'POST',
         headers: 
         {

@@ -100,7 +100,7 @@ export function useFetchAndProcessData()
     {
       try 
       {
-        const response = await fetch('/documents/fetch-documents-by-user', {
+        const response = await fetch('api/documents/fetch-documents-by-user', {
           method: 'GET',
           headers: {
             // Tell the server we are sending JSON data
@@ -165,80 +165,110 @@ export function useFetchAndProcessData()
 /**
  * FUNCTION to handle viewing the CSV file!
  */
-export function useHandleClickViewDocument(rowId: string)
+export function useDocumentLoader(rowId: string | null) 
 {
-  // For file path from database
-  const [ filePath, setFilePath ] = useState([]);
-  // FOR CSV FILE CONTENT
-  const [ csvContent, setCsvContent ] = useState([]);
+  const [filePath, setFilePath] = useState<string | null>(null);
+  const [csvContent, setCsvContent] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Get the document id in the MYSQL table using rowID (frontend table)
-  useEffect(() => 
+  // Fetch the File Path when rowId changes
+  useEffect(() =>
     {
-      async function fetchRowById()
+    // Don't run if there is no rowId selected
+    if (!rowId) return;
+
+    async function fetchFilePathById() 
+    {
+      setLoading(true);
+      try 
       {
-        try 
-        {
-          const response = await fetch('/documents/fetch-file-path-by-row-id', {
-            method: 'GET',
-            headers: {
-              // Tell the server we are sending JSON data
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
-              'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+        // Pass rowId in the URL, and not THE body, because it is a GET request
+        const response = await fetch(`/api/documents/fetch-file-path-by-id?id=${rowId}`, {
+          method: 'GET',
+          headers: 
+          {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
           },
-          })
+        });
 
-          if (!response.ok)
-          {
-            throw new Error("HTTPS ERROR! Status: ${response.status}");
-          }
-
-          // convert to json and send
-          const filePath = await response.json();
-          setFilePath(filePath);
-        }
-        catch (error)
+        if (!response.ok)
         {
-          console.error("Failed to fetch data:" + error);
-        }
-      }
-    }, [rowId] // [rowId] here means this effect will rerun only when rowId changes
-  );
-  
-  // FETCH the CSV FILE from the public folder obv
-  useEffect(() => 
-    {
-      const loadCsvData = function() 
+          throw new Error(`HTTPS ERROR! Status: ${response.status}`);
+        } 
+
+        const data = await response.json();
+        console.log("Laravel Response Data: " + data);
+        console.log("Laravel Response Data File Path: " + data.file_path);
+
+        const pathString = data.file_path || data; 
+
+        // Assuming the API returns { path: "some/path.csv" } or similar
+        setFilePath(pathString); 
+      } 
+      catch (error) 
       {
-        fetch('./' + filePath)
+        console.error("Failed to fetch file path:", error);
+      }
+    }
+
+    fetchFilePathById(); 
+
+  }, [rowId]);
+
+  // Fetch the CSV content ONLY when filePath changes
+  useEffect(() => 
+  {
+    if (!filePath || filePath.length === 0)
+    {
+      return; 
+    } 
+
+    const loadCsvData = function() 
+    {
+        // Ensure we construct the URL correctly
+        // If filePath already contains "uploads/", don't add it again.
+        // If it's just the filename, add the folder.
+        // 
+        const url = `/storage/${filePath}`; // Adjust based on where your files live in 'public'
+
+        console.log("Fetching CSV content from:", url);
+
+        fetch(url)
         .then(response => response.text())
-        .then(responseText => 
-          {
-            setCsvContent(responseText);
-          }
-        )
-      };
-    }, [filePath] // [filePath] means this effect will rerun only when filePath changes
-  );
+        .then(responseText => {
+          //console.log("RESPONSE TEXT: " + responseText);
+          setCsvContent(responseText);
+          setLoading(false); // Done loading
+        })
+        .catch(error => {
+          console.error(error);
+          setLoading(false);
+        });
+    };
 
-  console.log("CSV Content Extracted: ");
-  console.log(csvContent);
+    loadCsvData(); 
 
-  // Parse CSV and send to the DataViewer react View
-  Papa.parse();
+  }, [filePath]);
 
-  return { csvContent, filePath };
+  console.log("CSV CONTENT: " + csvContent);
+
+  return { csvContent, filePath, loading };
 }
-
-
 
 function DocumentHistoryTable() 
 {
+  // Remember to call hooks only at the top level components
   // For Displaying the table - came with the react component idk what they're being used for pls forgive me onegai
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
+  // State to track which row the user clicked
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  // It will sit waiting. It won't fetch anything until selectedRowId is set.
+  const { csvContent, loading } = useDocumentLoader(selectedRowId);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -256,6 +286,12 @@ function DocumentHistoryTable()
   {
     return <CircularProgress />;
   }
+
+  // For viewing CSV files
+  const handleViewDocumentClick = (id: string) => 
+  {
+    setSelectedRowId(id);
+  };
 
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -294,7 +330,7 @@ function DocumentHistoryTable()
                           <TableCell key="check_result" align="center">
                             {/* () => function() makes it so that it's called when the comp/button is CLICKED */}
                             {/* function() makes it so that the function is called as soon as it's rendered */}
-                            <IconButton aria-label="delete" onClick={() => useHandleClickViewDocument(row.document_id)}>
+                            <IconButton aria-label="delete" onClick={() => handleViewDocumentClick(row.document_id)}>
                               <ExitToAppIcon />
                             </IconButton>
                           </TableCell>

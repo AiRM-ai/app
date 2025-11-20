@@ -12,18 +12,23 @@ class ImportedDocumentsController extends Controller
 {
     public function fetchFilePathByRowId(Request $request)
     {
-        // Validate request
-        $validated = $request->validate([
-            'id' => 'required',
-        ]);
+        // Get the 'id' from the URL query string (?id=...)
+        $rowId = $request->input('id'); 
         
-        $rowId = $request->id;
+        if (!$rowId) 
+        {
+            return response()->json(['error' => 'ID is missing'], 400);
+        }
 
         // Make an eloquent
-        $rowById = ImportedDocuments::where("username", $rowId)->select("file_path")->get();
+        $document = ImportedDocuments::where("id", $rowId)->first();
 
-        // Return a view (and pass parameters to this view)
-        return (json_encode($rowById));
+        if (!$document) 
+        {
+            return response()->json(['error' => 'Document not found'], 404);
+        }
+ 
+        return response()->json(['file_path' => $document->file_path]);
     }
 
     public function fetchRowByUser(Request $request)
