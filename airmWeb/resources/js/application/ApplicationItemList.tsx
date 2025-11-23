@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect, useRef, FC, KeyboardEvent, ChangeEvent } from 'react';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
@@ -17,44 +17,17 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { Dialog, DialogContent, DialogTitle, DialogActions } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress } from '@mui/material';
 import { Button } from '@mui/material';
-
-function createData(
-  name: string,
-  calories: number,
-  fat: number,
-  carbs: number,
-  protein: number,
-  price: number,
-) {
-  return {
-    name,
-    calories,
-    fat,
-    carbs,
-    protein,
-    price,
-    history: [
-      {
-        date: '2020-01-05',
-        customerId: '11091700',
-        amount: 3,
-      },
-      {
-        date: '2020-01-02',
-        customerId: 'Anonymous',
-        amount: 1,
-      },
-    ],
-  };
-}
+import DeleteIcon from '@mui/icons-material/Delete'; 
 
 function AddItemInputForm({ open, handleClose }) 
 {
     const addItemToDatabase = async (formData: any) => {
       try 
       {
+        console.log(formData);
+
         // Use fetch to send a POST request to our new Laravel endpoint (in web.php)
         const response = await fetch('/data/add-item', {
           method: 'POST',
@@ -82,7 +55,7 @@ function AddItemInputForm({ open, handleClose })
       catch (error) 
       {
         console.error('Error adding item:', error);
-        alert('Error: Could add the item.');
+        alert('Error: Could not add the item.');
       }
   };
 
@@ -90,6 +63,7 @@ function AddItemInputForm({ open, handleClose })
   const [formData, setFormData] = useState({
     item_name: '',
     item_description: '',
+    item_category: '',
     item_price: '',
     item_stock: '',
     item_currency: 'JPY',
@@ -97,7 +71,8 @@ function AddItemInputForm({ open, handleClose })
 
   const [errors, setErrors] = useState({});
 
-  const handleChange = (event) => {
+  const handleChange = (event) => 
+    {
     const { name, value } = event.target;
     setFormData({
       ...formData,
@@ -105,7 +80,8 @@ function AddItemInputForm({ open, handleClose })
     });
 
     // Clear the specific error for the field being edited
-    if (errors[name]) {
+    if (errors[name]) 
+    {
       setErrors({
         ...errors,
         [name]: '',
@@ -113,9 +89,11 @@ function AddItemInputForm({ open, handleClose })
     }
   };
 
-  const validate = () => {
+  const validate = () => 
+  {
     let tempErrors = {};
     tempErrors.item_name = formData.item_name ? '' : 'This field is required.';
+    tempErrors.item_category = formData.item_category ? '' : 'This field is required.';
     tempErrors.item_price = formData.item_price ? '' : 'This field is required.';
     tempErrors.item_stock = formData.item_stock ? '' : 'This field is required.';
     setErrors(tempErrors);
@@ -129,14 +107,15 @@ function AddItemInputForm({ open, handleClose })
   {
     formData.item_name = '';
     formData.item_description = '';
+    formData.item_category = '';
     formData.item_stock = '';
     formData.item_price = '';
     formData.item_currency = 'JPY';
-
   }
 
   // FORM SUBMISSION!!--->
-  const handleSubmit = () => {
+  const handleSubmit = () => 
+  {
     if (validate()) 
     {
       // Proceed with form submission logic
@@ -147,6 +126,7 @@ function AddItemInputForm({ open, handleClose })
     }
   };
 
+  // FOR all the possible currencies
   const currencies = [
     {
       value: 'USD',
@@ -190,6 +170,17 @@ function AddItemInputForm({ open, handleClose })
               name="item_description"
               id="item_description"
               label="Item Description"
+              variant="filled"
+            />
+            <TextField
+              required
+              value={formData.item_category}
+              onChange={handleChange}
+              error={!!errors.item_category} // The `!!` converts the string to a boolean
+              helperText={errors.item_category}
+              name="item_category"
+              id="item_category"
+              label="Item Category"
               variant="filled"
             />
             <TextField
@@ -260,42 +251,36 @@ function Row(props: { row: ReturnType<typeof createData> }) {
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          {row.name}
+          {row.item_name}
         </TableCell>
-        <TableCell align="right">{row.calories}</TableCell>
-        <TableCell align="right">{row.fat}</TableCell>
-        <TableCell align="right">{row.carbs}</TableCell>
-        <TableCell align="right">{row.protein}</TableCell>
+        <TableCell align="right">{row.item_category}</TableCell>
+        <TableCell align="right">{row.item_stock}</TableCell>
+        <TableCell align="right">{row.item_price}</TableCell>
+        <TableCell align="right">{row.item_currency}</TableCell>
+        <TableCell align="center">
+            <IconButton 
+                aria-label="delete-item" 
+                color="error" // Makes it red
+            >
+                <DeleteIcon />
+            </IconButton>
+        </TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               <Typography variant="h6" gutterBottom component="div">
-                History
+                Item Details
               </Typography>
               <Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell align="right">Total price ($)</TableCell>
+                    <TableCell>Item Description</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {row.history.map((historyRow) => (
-                    <TableRow key={historyRow.date}>
-                      <TableCell component="th" scope="row">
-                        {historyRow.date}
-                      </TableCell>
-                      <TableCell>{historyRow.customerId}</TableCell>
-                      <TableCell align="right">{historyRow.amount}</TableCell>
-                      <TableCell align="right">
-                        {Math.round(historyRow.amount * row.price * 100) / 100}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableCell align="left">{row.item_description}</TableCell>
                 </TableBody>
               </Table>
             </Box>
@@ -305,13 +290,131 @@ function Row(props: { row: ReturnType<typeof createData> }) {
     </React.Fragment>
   );
 }
+
+// FUNCTION to create a data item
+function createData(
+  item_name: string,
+  item_description: string,
+  item_category: string,
+  item_stock: number,
+  item_price: number,
+  item_currency: string,
+  item_id: string,
+) {
+  return {
+    item_name,
+    item_description,
+    item_category,
+    item_stock,
+    item_price,
+    item_currency,
+    item_id,
+    history: [
+      {
+        date: '2020-01-05',
+        customerId: '11091700',
+        amount: 2,
+      },
+      {
+        date: '2020-01-02',
+        customerId: 'Anonymous',
+        amount: 1,
+      },
+    ],
+  };
+}
+
+// TEST DATA
 const rows = [
-  createData('Frozen yoghurt', 159, 6.0, 24, 4.0, 3.99),
-  createData('Ice cream sandwich', 237, 9.0, 37, 4.3, 4.99),
-  createData('Eclair', 262, 16.0, 24, 6.0, 3.79),
-  createData('Cupcake', 305, 3.7, 67, 4.3, 2.5),
-  createData('Gingerbread', 356, 16.0, 49, 3.9, 1.5),
+  createData('Frozen yoghurt', "Greek yogurt that's forzen", "yogrutt", 24, 4.0, "DIN", "1"),
+  createData('Ice cream sandwich', "237", "ts", 37, 4.3, "EUR", "2"),
+  createData('Eclair', "262", "pmo", 24, 6.0, "JPY", "3"),
+  createData('Cupcake', "305", "icl", 67, 4.3, "USD", "4"),
+  createData('Gingerbread', "356", "fam", 49, 3.9, "INR", "5"),
 ];
+
+
+// FUNCTION TO GET DATA FROM THE DATABASE/BACKEND
+
+export function useFetchAndProcessData()
+{
+  const [rows, setRows] = useState([]);
+  const [documents, setDocuments] = useState([]);    
+  
+  // we stiilll loading the data fam?
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => 
+  {
+
+    // Fetch records by user
+    async function fetchData()
+    {
+      try 
+      {
+        const response = await fetch('/data/get-items-by-user', 
+        {
+          method: 'GET',
+          headers: 
+          {
+            // Tell the server we are sending JSON data
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+          },
+        })
+
+        if (!response.ok)
+        {
+          throw new Error("HTTPS ERROR! Status: ${response.status}");
+        }
+
+        const items = await response.json();
+        console.log("ITEMS: " + items);
+
+        if (Array.isArray(documents))
+        {
+          const processedRows = items.map(item => 
+          {
+            // Call your function with the values from each item
+            return createData(
+              item.item_name,
+              item.item_description,
+              item.item_category,
+              item.item_stock,
+              item.item_price,
+              item.item_currency,
+              item.id,
+            );
+          });
+
+          setRows(processedRows);
+        }
+        else 
+        {
+          console.error("Invalid data received:", items);
+        }
+      }
+      catch (error)
+      {
+        console.error("Failed to fetch data:" + error);
+      }
+      finally 
+      {
+        setIsLoading(false);
+      }
+    }  
+
+    fetchData();
+
+  }, []);
+
+  return { rows, isLoading }; 
+};
+
+
+// Function to show the actual table
 export default function CollapsibleTable() 
 {
   const [open, setOpen] = useState(false);
@@ -324,6 +427,29 @@ export default function CollapsibleTable()
     setOpen(false);
   };
 
+  // For deleting item
+  const handleDeleteItemClick = (id: string) => 
+  {
+    if(confirm("Are you sure you want to delete this item?")) 
+    {
+        console.log("Deleting item with ID:", id);
+        
+        // TODO: Call your API here to delete
+        // await fetch('/data/delete-item', { method: 'POST', body: JSON.stringify({ id }) ... });
+        
+        // TODO: Update your 'rows' state here to remove it from the screen
+
+    }
+  };
+
+  // Call data process function
+  const { rows, isLoading } = useFetchAndProcessData();
+
+  if (isLoading)
+  {
+    return <CircularProgress />;
+  }
+
   return (
     <div>
       <TableContainer component={Paper}>
@@ -331,17 +457,21 @@ export default function CollapsibleTable()
           <TableHead>
             <TableRow>
               <TableCell />
-              <TableCell>Dessert (100g serving)</TableCell>
-              <TableCell align="right">Calories</TableCell>
-              <TableCell align="right">Fat&nbsp;(g)</TableCell>
-              <TableCell align="right">Carbs&nbsp;(g)</TableCell>
-              <TableCell align="right">Protein&nbsp;(g)</TableCell>
+              <TableCell>Item Name</TableCell>
+              <TableCell align="right">Item Category</TableCell>
+              <TableCell align="right">Item Stock</TableCell>
+              <TableCell align="right">Item Price</TableCell>
+              <TableCell align="right">Item Currency</TableCell>
+              <TableCell align="center">Delete Item</TableCell> 
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
-              <Row key={row.name} row={row} />
-            ))}
+            {
+              rows.map((row) => (
+                <Row key={row.name} row={row}/>
+                // <Row key={row.name} row={row} onclick={handleDeleteItem} />
+              ))
+            }
           </TableBody>
         </Table>
       </TableContainer>

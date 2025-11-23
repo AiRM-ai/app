@@ -10,6 +10,22 @@ use App\Models\ItemList;
 
 class ItemsListController extends Controller
 {
+    public function fetchItemRowByItemId(Request $request)
+    {
+        // get the id from the req
+        $itemRowId = $request->input("id");
+
+        if (!$itemRowId)
+        {
+            return response()->json(["error" => "ID is missing"], 400);
+        }
+
+        // eloquent for doc
+        $itemRow = ItemList::where("id", $itemRowId);
+
+        return (json_encode($itemRow));
+    }
+    
     // to get all the items that a user added:
     public function fetchItemsByUser()
     {
@@ -35,6 +51,7 @@ class ItemsListController extends Controller
         $validated = $request->validate([
             'item_name' => 'required',
             'item_description' => 'nullable',
+            'item_category' => 'required',
             'item_price' => 'required',
             'item_stock' => 'required',
             'item_currency' => 'required'
@@ -48,6 +65,7 @@ class ItemsListController extends Controller
         $items->username = $username;
         $items->item_name = $validated['item_name'];
         $items->item_description = $validated['item_description'];
+        $items->item_category = $validated['item_category'];
         $items->item_price = $validated['item_price'];
         $items->item_stock = $validated['item_stock'];
         $items->item_currency = $validated['item_currency'];
