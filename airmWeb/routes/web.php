@@ -62,7 +62,6 @@ Route::get('/app', function ()
 
 // --------------------------------
 // API ROUTES
-
 Route::post('/model/prediction', [ItemsListController::class, 'addItem'])->middleware('auth', 'verified');
 Route::get('/model/get-prediction', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
 // FILES:
