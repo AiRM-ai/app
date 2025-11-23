@@ -234,8 +234,9 @@ function AddItemInputForm({ open, handleClose })
   );
 }
 
-function Row(props: { row: ReturnType<typeof createData> }) {
-  const { row } = props;
+function Row(props: { row: ReturnType<typeof createData>, onDelete: (id: string) => void }) 
+{
+  const { row, onDelete } = props;
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -261,6 +262,7 @@ function Row(props: { row: ReturnType<typeof createData> }) {
             <IconButton 
                 aria-label="delete-item" 
                 color="error" // Makes it red
+                onClick = {() => onDelete(row.item_id)}
             >
                 <DeleteIcon />
             </IconButton>
@@ -373,7 +375,7 @@ export function useFetchAndProcessData()
         const items = await response.json();
         console.log("ITEMS: " + items);
 
-        if (Array.isArray(documents))
+        if (Array.isArray(items))
         {
           const processedRows = items.map(item => 
           {
@@ -385,7 +387,7 @@ export function useFetchAndProcessData()
               item.item_stock,
               item.item_price,
               item.item_currency,
-              item.id,
+              item.id, //ensure it exists even in the sql db
             );
           });
 
@@ -410,7 +412,8 @@ export function useFetchAndProcessData()
 
   }, []);
 
-  return { rows, isLoading }; 
+  // i'm returning setRows as well so we can delete items
+  return { rows, isLoading, setRows }; 
 };
 
 
@@ -419,16 +422,19 @@ export default function CollapsibleTable()
 {
   const [open, setOpen] = useState(false);
 
-  const handleClickOpen = () => {
+  const handleClickOpen = () => 
+  {
     setOpen(true);
   };
 
-  const handleClose = () => {
+  const handleClose = () => 
+  {
     setOpen(false);
   };
 
   // For deleting item
-  const handleDeleteItemClick = (id: string) => 
+  //// Old= const handleDeleteItemClick = (id: string) => 
+  async function handleDeleteItemClick(id: string)
   {
     if(confirm("Are you sure you want to delete this item?")) 
     {
@@ -438,15 +444,41 @@ export default function CollapsibleTable()
         // await fetch('/data/delete-item', { method: 'POST', body: JSON.stringify({ id }) ... });
         try 
         {
+          const response = await fetch("/data/delete-item", {
+            method: "POST",
+            headers:
+            {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+            },
+            body: JSON.stringify({ id: id }),
+          });
+
+          if (!response.ok)
+          {
+            throw new Error(`HTTPS ERROR! Status: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          
+          // 201 means success, check controller
+          if (response.status === 201 || response.status === 200)
+          {
+            alert("Item deleted successfully!");
+          }
+          else
+          {
+            alert("Error occurred while trying to delete item.");
+          }
 
         }
         catch (error)
         {
-          console.error("An error occurred while trying to fetch an item: " + error);
+          console.error("An error occurred while trying to delete an item: " + error);
+          alert("Error occurred while trying to delete item.");
         }
-        
-        // TODO: Update your 'rows' state here to remove it from the screen
-
     }
   };
 
@@ -476,7 +508,11 @@ export default function CollapsibleTable()
           <TableBody>
             {
               rows.map((row) => (
-                <Row key={row.name} row={row}/>
+                <Row 
+                  key={row.name} 
+                  row={row}
+                  onDelete = {handleDeleteItemClick}
+                />
                 // <Row key={row.name} row={row} onclick={handleDeleteItem} />
               ))
             }

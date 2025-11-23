@@ -80,7 +80,7 @@ Route::post('/data/delete-item', [ItemsListController::class, 'deleteItem'])->mi
 // For fetching/getting items (also by user obv)
 Route::get('/data/get-items-by-user', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
 // For fetching item by item id
-Route::get('/data/get-items-by-id', [ItemsListController::class, 'fetchItemByItemId'])->middleware('auth', 'verified');
+Route::get('/data/get-item-by-id', [ItemsListController::class, 'fetchItemByItemId'])->middleware('auth', 'verified');
 
 
 // --------------------------------
