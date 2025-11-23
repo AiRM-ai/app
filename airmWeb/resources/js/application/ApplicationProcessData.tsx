@@ -1,4 +1,3 @@
-// resources/js/components/ChatWindow.tsx
 import React, { useState, useEffect, useRef, FC, KeyboardEvent, ChangeEvent } from 'react';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
@@ -85,7 +84,14 @@ function createData(
     return { document_id, username, file_name, imported_date, imported_time };
 }
 
-export function useFetchAndProcessData()
+// useFetchAndProcessData
+/**
+ * called use cuz react is weird, wants me to name the custom hook starting with use
+ * 
+ * @param refreshTrigger to see if the table needs a refresh or not
+ * @returns 
+ */
+export function useFetchAndProcessData(refreshTrigger: number)
 {
   const [rows, setRows] = useState([]);
   const [documents, setDocuments] = useState([]);    
@@ -98,6 +104,9 @@ export function useFetchAndProcessData()
     // Fetch records by user
     async function fetchData()
     {
+      // Reset loading to true when a refresh occurs
+      setIsLoading(true);
+
       try 
       {
         const response = await fetch('api/documents/fetch-documents-by-user', {
@@ -157,7 +166,8 @@ export function useFetchAndProcessData()
 
     fetchData();
 
-  }, []);
+    // whenever refreshTrigger changes, the use effect runs again!
+  }, [refreshTrigger]);
 
   return { rows, isLoading }; 
 };
@@ -259,7 +269,14 @@ export function useDocumentLoader(rowId: string | null)
   return { csvContent, filePath, loading };
 }
 
-function DocumentHistoryTable() 
+// interface for props to accept the refreshTrigger
+// pass these to the DocumentHistoryTable function
+interface DocumentHistoryTableProps
+{
+  refreshTrigger: number;
+}
+
+function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps ) 
 {
   // Remember to call hooks only at the top level components
   // For Displaying the table - came with the react component idk what they're being used for pls forgive me onegai
@@ -282,7 +299,7 @@ function DocumentHistoryTable()
   };
 
   // Call data process function
-  const { rows, isLoading } = useFetchAndProcessData();
+  const { rows, isLoading } = useFetchAndProcessData(refreshTrigger);
 
   if (isLoading)
   {
@@ -370,6 +387,16 @@ function DocumentHistoryTable()
 
 const ApplicationProcessData: FC = () => 
 {
+  // created state to track the updates
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // state handler function that incremenets the key (which forces a refresh)
+  const handleRefreshData = () =>
+  {
+    console.log("Refreshing...");
+    setRefreshKey(prevKey => prevKey + 1);
+  }
+
     return (
         <div className = "w-full p-6 mt-4 mb-3">
             {/* MAIN APPLICATION GRID */}
@@ -388,7 +415,9 @@ const ApplicationProcessData: FC = () =>
                 </Grid>
                 <Grid size = {8}>
                     {/* FILE UPLOAD BUTTON */}
-                    <FileUploadButton />
+                    <FileUploadButton 
+                      onUploadSuccess = {handleRefreshData} // to refresh the table
+                    />
                 </Grid>
                 <Grid size = {8}>
                     <span className="text-gray-700">Note: Only files of .csv type are allowed as of now</span>
@@ -400,7 +429,9 @@ const ApplicationProcessData: FC = () =>
             <Typography variant="h4" component="h4" sx={{ color:"black", }}>
                 Document History
             </Typography>
-            <DocumentHistoryTable />
+            <DocumentHistoryTable 
+              refreshTrigger = {refreshKey}
+            />
         </div>
     );
 }

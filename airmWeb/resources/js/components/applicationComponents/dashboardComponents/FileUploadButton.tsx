@@ -15,9 +15,15 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-export default function InputFileUpload() {
-  // Create a state to hold the selected files
-  // TODO: SET TO A SINGLE FILE
+//interface so the component knows it might receive a function
+interface InputFileUploadProps 
+{
+  onUploadSuccess?: () => void;
+}
+
+export default function InputFileUpload( { onUploadSuccess }: InputFileUploadProps) 
+{
+  // Create a state to hold the selected file(s) - only one file for now
   const [selectedFile, setSelectedFile] = useState<File | any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -65,6 +71,12 @@ export default function InputFileUpload() {
       const result = await response.json();
       console.log('Success:', result.message);
       alert('Document record saved!');
+
+      // on success, call the refresh function
+      if (onUploadSuccess)
+      {
+        onUploadSuccess();
+      }
     } 
     catch (error) 
     {
@@ -93,6 +105,8 @@ export default function InputFileUpload() {
       // We'll just process the first file for this example
       const firstFile = files[0];
       //console.log('File selected:', firstFile);
+      // also save the state
+      setSelectedFile(firstFile);
 
       // Immediately call the function to save the metadata to the backend
       saveDocumentMetadata(firstFile);

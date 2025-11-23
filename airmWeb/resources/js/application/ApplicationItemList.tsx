@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect, useRef, FC, KeyboardEvent, ChangeEvent } from 'react';
+import { useState, useEffect, useRef, FC, KeyboardEvent, ChangeEvent, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress } f
 import { Button } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete'; 
 
-function AddItemInputForm({ open, handleClose }) 
+function AddItemInputForm({ open, handleClose, onSuccess}) 
 {
     const addItemToDatabase = async (formData: any) => {
       try 
@@ -121,6 +121,10 @@ function AddItemInputForm({ open, handleClose })
       // Proceed with form submission logic
       console.log('Item Added Successfully:', formData);
       addItemToDatabase(formData);
+
+      // refresh the table
+      onSuccess();
+
       handleClose(); // Close the dialog
       clearForm();
     }
@@ -346,74 +350,75 @@ export function useFetchAndProcessData()
   // we stiilll loading the data fam?
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => 
+  // Fetch records by user
+  const fetchData = useCallback(async () =>
   {
-
-    // Fetch records by user
-    async function fetchData()
+    setIsLoading(true);
+    try 
     {
-      try 
+      const response = await fetch('/data/get-items-by-user', 
       {
-        const response = await fetch('/data/get-items-by-user', 
+        method: 'GET',
+        headers: 
         {
-          method: 'GET',
-          headers: 
-          {
-            // Tell the server we are sending JSON data
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
-            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-          },
-        })
+          // Tell the server we are sending JSON data
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
+          'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+        },
+      })
 
-        if (!response.ok)
-        {
-          throw new Error("HTTPS ERROR! Status: ${response.status}");
-        }
-
-        const items = await response.json();
-        console.log("ITEMS: " + items);
-
-        if (Array.isArray(items))
-        {
-          const processedRows = items.map(item => 
-          {
-            // Call your function with the values from each item
-            return createData(
-              item.item_name,
-              item.item_description,
-              item.item_category,
-              item.item_stock,
-              item.item_price,
-              item.item_currency,
-              item.id, //ensure it exists even in the sql db
-            );
-          });
-
-          setRows(processedRows);
-        }
-        else 
-        {
-          console.error("Invalid data received:", items);
-        }
-      }
-      catch (error)
+      if (!response.ok)
       {
-        console.error("Failed to fetch data:" + error);
+        throw new Error("HTTPS ERROR! Status: ${response.status}");
       }
-      finally 
+
+      const items = await response.json();
+      console.log("ITEMS: " + items);
+
+      if (Array.isArray(items))
       {
-        setIsLoading(false);
+        const processedRows = items.map(item => 
+        {
+          // Call your function with the values from each item
+          return createData(
+            item.item_name,
+            item.item_description,
+            item.item_category,
+            item.item_stock,
+            item.item_price,
+            item.item_currency,
+            item.id, //ensure it exists even in the sql db
+          );
+        });
+
+        setRows(processedRows);
       }
-    }  
-
-    fetchData();
-
+      else 
+      {
+        console.error("Invalid data received:", items);
+      }
+    }
+    catch (error)
+    {
+      console.error("Failed to fetch data:" + error);
+    }
+    finally 
+    {
+      setIsLoading(false);
+    }
   }, []);
 
-  // i'm returning setRows as well so we can delete items
-  return { rows, isLoading, setRows }; 
+  // useEffect to call it only when the component first loads
+  useEffect(() =>
+    {
+      fetchData(); 
+    }, [fetchData]
+  );
+
+  // i'm returning setRows as well so we can delete items + the function to refresh the table
+  return { rows, isLoading, setRows, refreshTable: fetchData }; 
 };
 
 
@@ -421,6 +426,9 @@ export function useFetchAndProcessData()
 export default function CollapsibleTable() 
 {
   const [open, setOpen] = useState(false);
+
+  // destruct useFetchAndProcessData()
+  const { rows, isLoading, setRows, refreshTable } = useFetchAndProcessData();
 
   const handleClickOpen = () => 
   {
@@ -467,6 +475,9 @@ export default function CollapsibleTable()
           if (response.status === 201 || response.status === 200)
           {
             alert("Item deleted successfully!");
+
+            // refresh table
+            refreshTable();
           }
           else
           {
@@ -481,9 +492,6 @@ export default function CollapsibleTable()
         }
     }
   };
-
-  // Call data process function
-  const { rows, isLoading } = useFetchAndProcessData();
 
   if (isLoading)
   {
@@ -530,7 +538,11 @@ export default function CollapsibleTable()
         <AddIcon />
       </Fab>
 
-      <AddItemInputForm open={open} handleClose={handleClose} />
+      <AddItemInputForm 
+        open={open} 
+        handleClose={handleClose}
+        onSuccess = {refreshTable} // call it here so it can add
+      />
     </div>
   );
 }
