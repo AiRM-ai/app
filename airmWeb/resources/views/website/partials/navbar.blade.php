@@ -1,4 +1,4 @@
-<nav class="flex justify-between items-center p-4 bg-gray-800 text-white">
+<nav class="flex justify-between items-center p-4 bg-blue-950 text-white">
     <h1 class="text-2xl font-bold text-blue-400">AiRM.ai</h1>
 
     <ul class="flex gap-6">

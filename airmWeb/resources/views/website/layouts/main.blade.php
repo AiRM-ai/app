@@ -9,7 +9,7 @@
     @vite(['resources/js/app.tsx', 'resources/css/app.css'])
 </head>
 
-<body class="bg-gray-900 text-white font-sans">
+<body class="bg-gradient-to-br from-[#0a0f24] to-[#0b1a40] min-h-screen">
 
     {{-- Navbar --}}
     @include('website.partials.navbar')

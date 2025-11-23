@@ -3,22 +3,19 @@
 @section('title', 'Product')
 
 @section('content')
-<header class="bg-gray-900 py-20">
+<header class="py-20">
     <div class="max-w-6xl mx-auto px-6">
         <h1 class="text-5xl md:text-6xl font-extrabold text-blue-600 leading-tight">
             Our Product
         </h1>
         <p class="text-gray-300 text-lg mt-6 max-w-3xl">
-            AiRM.ai provides an AI-driven platform that optimizes supply chain operations through predictive analytics, 
-            intelligent restocking, and dynamic pricing automation.
+            AiRM.ai delivers an advanced AI-driven platform designed to streamline and elevate every layer of supply chain operations. Through powerful predictive analytics, intelligent demand forecasting, automated restocking recommendations, and adaptive pricing optimization, the system helps businesses minimize inefficiencies, reduce costs, and respond proactively to market changes — enabling a faster, smarter, and more resilient supply chain.
         </p>
     </div>
 </header>
 
-<main class="bg-gray-800 py-16">
+<main class="py-16">
     <div class="max-w-6xl mx-auto px-6 space-y-12">
-
-        {{-- What We Offer --}}
         <section>
             <h2 class="text-3xl font-semibold text-blue-400 mb-4">What We Offer</h2>
             <p class="text-gray-300 leading-relaxed max-w-4xl">
@@ -27,8 +24,6 @@
                 AiRM.ai’s adaptive AI transforms raw data into actionable supply insights that drive profit and efficiency.
             </p>
         </section>
-
-        {{-- Why It’s Powerful --}}
         <section>
             <h2 class="text-3xl font-semibold text-blue-400 mb-4">Why It’s Powerful</h2>
             <p class="text-gray-300 leading-relaxed max-w-4xl">
@@ -38,8 +33,6 @@
                 into pricing and restocking recommendations.
             </p>
         </section>
-
-        {{-- Key Features --}}
         <section>
             <h2 class="text-3xl font-semibold text-blue-400 mb-4">Key Features</h2>
             <ul class="text-gray-300 space-y-2 list-disc list-inside leading-relaxed">
@@ -50,10 +43,8 @@
                 <li>Enterprise-grade security and privacy compliance</li>
             </ul>
         </section>
-
-        {{-- Pricing Plans --}}
-        <section class="pt-8">
-            <h2 class="text-3xl font-semibold text-blue-400 mb-8">Pricing Plans</h2>
+        <section class="pt-8 text-center">
+            <h1 class="text-3xl font-bold text-blue-400 mb-8">Pricing Plans</h1>
 
             <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:items-center md:gap-8">

@@ -3,20 +3,19 @@
 @section('title', 'Technology')
 
 @section('content')
-<header class="bg-gray-900 py-20">
+<header class="py-20">
     <div class="max-w-6xl mx-auto px-6">
         <h1 class="text-5xl md:text-6xl font-extrabold text-blue-600 leading-tight">
             About the Backend
         </h1>
         <p class="text-gray-300 text-lg mt-6 max-w-3xl">
-            Powering AiRM.ai’s intelligent supply chain optimization with scalable, data-driven machine learning.
+            Powering AiRM.ai’s intelligent supply chain optimization with scalable, data-driven machine learning that continuously learns from evolving patterns, enhances forecasting accuracy, and supports real-time decision-making. Our models are designed to adapt at scale—ensuring reliable performance, faster insights, and smarter operational strategies across every level of the supply chain.
         </p>
     </div>
 </header>
 
-<main class="bg-gray-800 py-16">
+<main class="py-16">
     <div class="max-w-6xl mx-auto px-6 space-y-10">
-        {{-- Model Overview --}}
         <section>
             <h2 class="text-3xl font-semibold text-blue-400 mb-4">About the Models</h2>
             <p class="text-gray-300 leading-relaxed max-w-4xl">
@@ -26,8 +25,6 @@
                 alignment while reducing waste.
             </p>
         </section>
-
-        {{-- Additional Technical Insight --}}
         <section>
             <h2 class="text-3xl font-semibold text-blue-400 mb-4">Learning and Optimization</h2>
             <p class="text-gray-300 leading-relaxed max-w-4xl">
@@ -35,8 +32,6 @@
                 based on new transaction data. This ensures forecasts remain accurate even as market conditions evolve.
             </p>
         </section>
-
-        {{-- Scalability --}}
         <section>
             <h2 class="text-3xl font-semibold text-blue-400 mb-4">Scalability and Integration</h2>
             <p class="text-gray-300 leading-relaxed max-w-4xl">

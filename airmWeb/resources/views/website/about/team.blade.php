@@ -8,7 +8,6 @@
 </header>
 
 <main class="max-w-5xl mx-auto text-left space-y-10">
-    {{-- Bhushith --}}
     <div class="flex items-center space-x-6">
         <img src="{{ asset('website/about/profile_pics/Bhushith.jpg') }}" 
              alt="Bhushith" 
@@ -20,8 +19,6 @@
             </p>
         </div>
     </div>
-
-    {{-- Kevin --}}
     <div class="flex items-center space-x-6">
         <img src="{{ asset('website/about/profile_pics/Kevin.jpg') }}" 
              alt="Kevin" 
@@ -33,8 +30,6 @@
             </p>
         </div>
     </div>
-
-    {{-- Alisa --}}
     <div class="flex items-center space-x-6">
         <img src="{{ asset('website/about/profile_pics/Alisa.jpg') }}" 
              alt="Alisa" 
