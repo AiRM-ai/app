@@ -436,6 +436,14 @@ export default function CollapsibleTable()
         
         // TODO: Call your API here to delete
         // await fetch('/data/delete-item', { method: 'POST', body: JSON.stringify({ id }) ... });
+        try 
+        {
+
+        }
+        catch (error)
+        {
+          console.error("An error occurred while trying to fetch an item: " + error);
+        }
         
         // TODO: Update your 'rows' state here to remove it from the screen
 

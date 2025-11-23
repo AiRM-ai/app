@@ -79,6 +79,8 @@ Route::post('/data/add-item', [ItemsListController::class, 'addItem'])->middlewa
 Route::post('/data/delete-item', [ItemsListController::class, 'deleteItem'])->middleware('auth', 'verified');
 // For fetching/getting items (also by user obv)
 Route::get('/data/get-items-by-user', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
+// For fetching item by item id
+Route::get('/data/get-items-by-id', [ItemsListController::class, 'fetchItemByItemId'])->middleware('auth', 'verified');
 
 
 // --------------------------------

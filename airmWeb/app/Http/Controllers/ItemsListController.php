@@ -10,7 +10,7 @@ use App\Models\ItemList;
 
 class ItemsListController extends Controller
 {
-    public function fetchItemRowByItemId(Request $request)
+    public function fetchItemByItemId(Request $request)
     {
         // get the id from the req
         $itemRowId = $request->input("id");

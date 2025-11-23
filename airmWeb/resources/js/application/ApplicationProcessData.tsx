@@ -217,6 +217,8 @@ export function useDocumentLoader(rowId: string | null)
 
   }, [rowId]);
 
+  console.log("FILE PATH: " + filePath);
+
   // Fetch the CSV content ONLY when filePath changes
   useEffect(() => 
   {
