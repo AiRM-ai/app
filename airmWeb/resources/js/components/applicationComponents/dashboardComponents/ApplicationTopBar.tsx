@@ -184,7 +184,6 @@ export default function PrimarySearchAppBar({ tabValue, handleTabChange }) {
                 aria-label="full width tabs"
               >
                 <Tab label="Process Data" />
-                <Tab label="Data Viewer" />
                 <Tab label="Item List" />
               </Tabs>
             </AppBar>

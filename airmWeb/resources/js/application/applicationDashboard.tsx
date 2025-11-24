@@ -31,8 +31,6 @@ const ApplicationDashboard: FC = () =>
         case 0:
             return <ApplicationProcessData />;
         case 1:
-            return <ApplicationDataViewer />;
-        case 2:
             return <ApplicationItemList />;
         default:
             return <ApplicationProcessData />;
