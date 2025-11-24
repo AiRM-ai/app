@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 // My Controllers:
 use App\Http\Controllers\ImportedDocumentsController;
 use App\Http\Controllers\ItemsListController;
+use App\Http\Controllers\PredictionController;
 
 // NOTES
 // return view("folderName.viewName");
@@ -81,6 +82,13 @@ Route::post('/data/delete-item', [ItemsListController::class, 'deleteItem'])->mi
 Route::get('/data/get-items-by-user', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
 // For fetching item by item id
 Route::get('/data/get-item-by-id', [ItemsListController::class, 'fetchItemByItemId'])->middleware('auth', 'verified');
+
+// MODEL PREDICTION ROUTES
+// This creates the URL: http://your-site/predictions/generate/{id}
+Route::prefix('predictions')->group(function () 
+{
+    Route::get('/generate/{id}', [PredictionController::class, 'predict']);
+});
 
 
 // --------------------------------

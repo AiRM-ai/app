@@ -72,8 +72,7 @@ def predict(df):
         'Stock_Number': test_identifiers['Stock Number'] if 'Stock Number' in test_identifiers.columns else X_test.index,
         'Common_Name': test_identifiers['Common Name'] if 'Common Name' in test_identifiers.columns else '',
         
-       
-        'Actual_Reorder_Threshold': y_test.iloc[:, 0].values, # Use .values to match y_pred shape
+        #'Actual_Reorder_Threshold': y_test.iloc[:, 0].values, # Use .values to match y_pred shape
         'Predicted_Reorder_Threshold': y_pred
     })
 
@@ -82,13 +81,15 @@ def predict(df):
     output_json_path = 'restock_predict_with_ids.json'
 
     try:
-      
         result_json = results_df.to_json(output_json_path, orient='records', indent=4)
         print(f"Prediction results saved to {output_json_path}")
     except Exception as e:
         print(f"\n Error saving JSON file: {e}")
  
         result_json = results_df.to_json(orient='records', indent=4) 
+
+    # gives fastAPI a list object that it will send to react
+    result_data = results_df.to_dict(orient='records')
     
 
-    return result_json
+    return result_data      

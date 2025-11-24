@@ -9,7 +9,7 @@ import io
 
 app = FastAPI()
 
-@app.post("/model/prediction")
+@app.post("/predict")
 async def predict_from_csv(file: UploadFile = File(...)):
   
     contents = await file.read()
