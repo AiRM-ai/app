@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, FC, KeyboardEvent, ChangeEvent } from 'react';
 import Box from '@mui/material/Box';
+import Collapse from '@mui/material/Collapse';
 import { styled } from '@mui/material/styles';
 import Grid from '@mui/material/Grid';
 import Container from '@mui/material/Container';
@@ -15,6 +16,10 @@ import { Typography } from '@mui/material';
 import { CircularProgress } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import Button from '@mui/material/Button';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
 // For CSV Parsing
 import Papa from "papaparse"; 
@@ -24,12 +29,20 @@ import ApplicationTopBar from "../components/applicationComponents/dashboardComp
 import TabLayout from "../components/applicationComponents/dashboardComponents/TabLayout";
 import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
 
-interface Column {
+interface Column 
+{
   id: 'username' | 'file_name' | 'imported_date' | 'imported_time' | 'check_result';
   label: string;
   minWidth?: number;
   align?: 'center';
   format?: (value: number) => string;
+}
+
+// To show prediction result from the ML model (backend)
+interface PredictionResult 
+{
+    status: string;
+    data: any; // Flexible, as the ML model output might vary
 }
 
 const columns: readonly Column[] = [
@@ -55,12 +68,6 @@ const columns: readonly Column[] = [
     align: 'center',
     format: (value: number) => value.toLocaleString('en-US'),
   },
-  {
-    id: 'check_result',
-    label: 'Check Result',
-    minWidth: 170,
-    align: 'center',
-  },
 ];
 
 // interface for data record
@@ -83,6 +90,239 @@ function createData(
 ): Data {
     return { document_id, username, file_name, imported_date, imported_time };
 }
+
+// New Hook to handle the Prediction API call
+function usePredictionGenerator() 
+{
+    const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+    const [loadingPred, setLoadingPred] = useState(false);
+
+    const generatePrediction = async (id: string) => 
+    {
+        setLoadingPred(true);
+        try 
+        {
+            // Fetch from the new Web Route we created
+            const response = await fetch(`/predictions/generate/${id}`, 
+            {
+                method: 'GET',
+                headers: 
+                {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    // Web routes need X-XSRF-TOKEN usually, but if standard auth is on, cookie handles it. 
+                    // Adding CSRF just in case.
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                }
+            });
+
+            if (!response.ok) 
+            {
+                throw new Error("Failed to generate prediction");
+            }
+
+            const result = await response.json();
+            setPrediction(result);
+        } 
+        catch (error) 
+        {
+            console.error(error);
+            alert("Error generating prediction. Check console.");
+        } 
+        finally 
+        {
+            setLoadingPred(false);
+        }
+    };
+
+    return { prediction, loadingPred, generatePrediction };
+}
+
+// --- NEW HELPER: PREDICTION TABLE ---
+// This takes the 'predictions' array from your JSON and shows it as a table
+const PredictionResultsTable = ({ data }: { data: any[] }) => 
+{
+    if (!data || data.length === 0) 
+    {
+        return <Typography variant="body2">No prediction data available.</Typography>;
+    }
+
+    // Dynamic headers based on the keys of the first object
+    const headers = Object.keys(data[0]);
+
+    return (
+        <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 300, border: '1px solid #eee' }}>
+            <Table stickyHeader size="small" aria-label="prediction table">
+                <TableHead>
+                    <TableRow>
+                        {headers.map((header) => (
+                            <TableCell key={header} sx={{ fontWeight: 'bold', backgroundColor: '#e3f2fd', color: '#1565c0' }}>
+                                {header}
+                            </TableCell>
+                        ))}
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {data.map((row, index) => (
+                        <TableRow key={index} hover>
+                            {headers.map((header) => (
+                                <TableCell key={`${index}-${header}`}>
+                                    {/* Render value, or stringify if it's an object */}
+                                    {typeof row[header] === 'object' ? JSON.stringify(row[header]) : row[header]}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </TableContainer>
+    );
+};
+
+function Row( props: { row: ReturnType<typeof createData> })
+{
+  const { row } = props;
+
+  // state to track if this state opened or nah
+  const [ open, setOpen ] = useState(false);
+
+  const { csvContent, loading } = useDocumentLoader(open ? row.document_id : null);
+
+  // call the prediction hook
+  const { prediction, loadingPred, generatePrediction } = usePredictionGenerator();
+
+  return (
+    <React.Fragment>
+      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
+        {/* CHANGE: This is the Expand/Collapse Button Column */}
+        <TableCell>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        
+        {/* Render the rest of your columns normally */}
+        {columns.map((column) => {
+            const value = row[column.id];
+            return (
+                <TableCell key={column.id} align={column.align}>
+                     {column.format && typeof value === 'number'
+                        ? column.format(value)
+                        : value}
+                </TableCell>
+            )
+        })}
+      </TableRow>
+
+      {/* CHANGE: The Expanded Row Section */}
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 1 }}>
+              {/* CHANGE: Used Grid to separate CSV (Left) and ML Results (Right) */}
+              <Grid container spacing={2}>
+
+
+                {/* LEFT SIDE: CSV CONTENT */}
+                <Grid size = {{ xs: 12, md: 6 }}>
+                    <Typography variant="h6" gutterBottom component="div">
+                        Original CSV Content
+                    </Typography>
+                    <Box sx={{ p: 2, backgroundColor: '#f9f9f9', borderRadius: 1, maxHeight: '300px', overflow: 'auto', border: '1px solid #e0e0e0' }}>
+                        {loading ? (
+                            <CircularProgress size={20} />
+                        ) : (
+                            <pre style={{ margin: 0, fontSize: '0.8rem' }}>
+                                {csvContent || "No content loaded."}
+                            </pre>
+                        )}
+                    </Box>
+                </Grid>
+
+
+                {/* RIGHT SIDE: PREDICTION RESULTS */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h6" gutterBottom component="div">
+                            ML Model Analysis
+                        </Typography>
+                        <Button 
+                            variant="contained" 
+                            size="small" 
+                            startIcon={<AutoFixHighIcon />}
+                            onClick={() => generatePrediction(row.document_id)}
+                            disabled={loadingPred}
+                        >
+                            {loadingPred ? "Analyzing..." : "Run Prediction"}
+                        </Button>
+                    </Box>
+
+                    <Box sx={{ p: 2, marginTop: 1, backgroundColor: '#e3f2fd', borderRadius: 1, maxHeight: '300px', overflow: 'auto', border: '1px solid #90caf9' }}>
+                            {loadingPred ? (
+                            <Box display="flex" justifyContent="center" p={2}>
+                                <CircularProgress />
+                            </Box>
+                            ) : prediction ? (
+                                // --- FIX LOGIC STARTS HERE ---
+                                (() => {
+                                    // 1. Resolve the data source
+                                    // Sometimes Laravel wraps response in 'data', sometimes it doesn't.
+                                    const rootData = prediction.data || prediction;
+                                    
+                                    // 2. Determine if we have our list
+                                    let listToDisplay: any[] = [];
+                                    let statusMsg = "Analysis Complete";
+
+                                    // CASE A: The root object is the array (Matches your latest JSON snippet)
+                                    if (Array.isArray(rootData)) {
+                                        listToDisplay = rootData;
+                                        statusMsg = `Rows Processed: ${rootData.length}`;
+                                    }
+                                    // CASE B: The array is inside a 'predictions' key (Old Python code style)
+                                    else if (rootData.predictions && Array.isArray(rootData.predictions)) {
+                                        listToDisplay = rootData.predictions;
+                                        statusMsg = rootData.status || "Complete";
+                                    }
+
+                                    return (
+                                        <div>
+                                            <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+                                                {statusMsg}
+                                            </Typography>
+
+                                            {/* 3. Render Table or Fallback */}
+                                            {listToDisplay.length > 0 ? (
+                                                <PredictionResultsTable data={listToDisplay} />
+                                            ) : (
+                                                // Fallback: If we couldn't find an array, show raw JSON so you can debug
+                                                <pre style={{ margin: 0, fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
+                                                    {JSON.stringify(rootData, null, 2)}
+                                                </pre>
+                                            )}
+                                        </div>
+                                    );
+                                })()
+                                // --- FIX ENDS HERE ---
+                            ) : (
+                            <Typography variant="body2" color="textSecondary" sx={{ fontStyle: 'italic' }}>
+                                Click "Run Prediction" to send this file to the AI Model.
+                            </Typography>
+                            )}
+                    </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
+} 
+
 
 // useFetchAndProcessData
 /**
@@ -318,6 +558,8 @@ function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps )
         <Table stickyHeader aria-label="sticky table">
           <TableHead sx = {{ backgroundColor: "gray"}}>
             <TableRow>
+              {/* extra for spacing */}
+              <TableCell /> 
               {columns.map((column) => (
                 <TableCell
                   key={column.id}
@@ -332,43 +574,9 @@ function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps )
           <TableBody>
             {rows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => 
-              {
-                const document_id = null;
-                return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                    {
-                    columns
-                    .map((column) => 
-                    {
-                      const value = row[column.id];
-                      if (column.id === "check_result")
-                      {
-                        // BUTTON to check document result
-                        return (
-                          <TableCell key="check_result" align="center">
-                            {/* () => function() makes it so that it's called when the comp/button is CLICKED */}
-                            {/* function() makes it so that the function is called as soon as it's rendered */}
-                            <IconButton aria-label="delete" onClick={() => handleViewDocumentClick(row.document_id)}>
-                              <ExitToAppIcon />
-                            </IconButton>
-                          </TableCell>
-                        );
-                      }
-                      else 
-                      {
-                        return ( 
-                          <TableCell key={column.id} align={column.align}>
-                            {column.format && typeof value === 'number'
-                              ? column.format(value)
-                              : value}
-                          </TableCell>
-                        );
-                      }
-                    })}
-                  </TableRow>
-                );
-              })}
+              .map((row) => (
+                <Row key = {row.document_id} row = {row} />
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
@@ -432,7 +640,7 @@ const ApplicationProcessData: FC = () =>
             <DocumentHistoryTable 
               refreshTrigger = {refreshKey}
             />
-        </div>
+        </div> 
     );
 }
 
