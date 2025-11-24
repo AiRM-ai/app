@@ -8,5 +8,6 @@
         <li><a href="{{ url('/tech') }}" class="hover:text-blue-300">Technology</a></li>
         <li><a href="{{ url('/team') }}" class="hover:text-blue-300">Team</a></li>
         <li><a href="{{ url('/contact') }}" class="hover:text-blue-300">Contact</a></li>
+        <li><a href="{{ url('/app') }}" class="hover:text-blue-300">App</a></li>
     </ul>
 </nav>
