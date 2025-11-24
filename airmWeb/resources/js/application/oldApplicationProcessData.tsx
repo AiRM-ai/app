@@ -16,8 +16,6 @@ import { Typography } from '@mui/material';
 import { CircularProgress } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 // For CSV Parsing
 import Papa from "papaparse"; 
@@ -27,8 +25,7 @@ import ApplicationTopBar from "../components/applicationComponents/dashboardComp
 import TabLayout from "../components/applicationComponents/dashboardComponents/TabLayout";
 import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
 
-interface Column 
-{
+interface Column {
   id: 'username' | 'file_name' | 'imported_date' | 'imported_time' | 'check_result';
   label: string;
   minWidth?: number;
@@ -58,6 +55,12 @@ const columns: readonly Column[] = [
     minWidth: 170,
     align: 'center',
     format: (value: number) => value.toLocaleString('en-US'),
+  },
+  {
+    id: 'check_result',
+    label: 'Check Result',
+    minWidth: 170,
+    align: 'center',
   },
 ];
 
@@ -381,8 +384,6 @@ function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps )
         <Table stickyHeader aria-label="sticky table">
           <TableHead sx = {{ backgroundColor: "gray"}}>
             <TableRow>
-              {/* extra for spacing */}
-              <TableCell /> 
               {columns.map((column) => (
                 <TableCell
                   key={column.id}
@@ -397,9 +398,43 @@ function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps )
           <TableBody>
             {rows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => (
-                <Row key = {row.document_id} row = {row} />
-              ))}
+              .map((row) => 
+              {
+                const document_id = null;
+                return (
+                  <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
+                    {
+                    columns
+                    .map((column) => 
+                    {
+                      const value = row[column.id];
+                      if (column.id === "check_result")
+                      {
+                        // BUTTON to check document result
+                        return (
+                          <TableCell key="check_result" align="center">
+                            {/* () => function() makes it so that it's called when the comp/button is CLICKED */}
+                            {/* function() makes it so that the function is called as soon as it's rendered */}
+                            <IconButton aria-label="view-document" onClick={() => handleViewDocumentClick(row.document_id)}>
+                              <ExitToAppIcon />
+                            </IconButton>
+                          </TableCell>
+                        );
+                      }
+                      else 
+                      {
+                        return ( 
+                          <TableCell key={column.id} align={column.align}>
+                            {column.format && typeof value === 'number'
+                              ? column.format(value)
+                              : value}
+                          </TableCell>
+                        );
+                      }
+                    })}
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
       </TableContainer>
