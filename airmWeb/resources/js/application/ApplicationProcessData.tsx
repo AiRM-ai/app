@@ -17,18 +17,12 @@ import IconButton from '@mui/material/IconButton';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 // For CSV Parsing
-// import Papa from "papaparse"; 
+import Papa from "papaparse"; 
 
 // Components from resources/js/components/applicationComponents/dashboardComponents
 import ApplicationTopBar from "../components/applicationComponents/dashboardComponents/ApplicationTopBar";
 import TabLayout from "../components/applicationComponents/dashboardComponents/TabLayout";
 import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
-
-// Assuming these are external components your dashboard needs:
-import ApplicationDataViewer from './ApplicationDataViewer';
-import ApplicationItemList from './ApplicationItemList';
-
-// --- INTERFACES AND DATA STRUCTURES ---
 
 interface Column {
   id: 'username' | 'file_name' | 'imported_date' | 'imported_time' | 'check_result';
@@ -45,21 +39,21 @@ const columns: readonly Column[] = [
     label: 'File Name',
     minWidth: 170,
     align: 'center',
-    // Removed format from ApplicationProcessData2.tsx as it doesn't apply to strings
+    format: (value: number) => value.toLocaleString('en-US'),
   },
   {
     id: 'imported_date',
     label: 'Date Imported',
     minWidth: 170,
     align: 'center',
-    // Removed format from ApplicationProcessData2.tsx
+    format: (value: number) => value.toLocaleString('en-US'),
   },
   {
     id: 'imported_time',
     label: 'Updated',
     minWidth: 170,
     align: 'center',
-    // Removed format from ApplicationProcessData2.tsx
+    format: (value: number) => value.toLocaleString('en-US'),
   },
   {
     id: 'check_result',
@@ -90,11 +84,16 @@ function createData(
     return { document_id, username, file_name, imported_date, imported_time };
 }
 
-export function useFetchAndProcessData()
+// useFetchAndProcessData
+/**
+ * called use cuz react is weird, wants me to name the custom hook starting with use
+ * 
+ * @param refreshTrigger to see if the table needs a refresh or not
+ * @returns 
+ */
+export function useFetchAndProcessData(refreshTrigger: number)
 {
-  // [COMMENT: Retained from ApplicationProcessData2.tsx]
-  // FIX: Explicitly set the type of the 'rows' state to Data[] for better typing
-  const [rows, setRows] = useState<Data[]>([]);
+  const [rows, setRows] = useState([]);
   const [documents, setDocuments] = useState([]);    
   
   // we stiilll loading the data fam?
@@ -123,8 +122,7 @@ export function useFetchAndProcessData()
 
         if (!response.ok)
         {
-          // [COMMENT: Fixed template literal]
-          throw new Error(`HTTPS ERROR! Status: ${response.status}`);
+          throw new Error("HTTPS ERROR! Status: ${response.status}");
         }
 
         const documents = await response.json();
@@ -149,8 +147,7 @@ export function useFetchAndProcessData()
             );
           });
 
-          // [COMMENT: Cast rows to Data[]]
-          setRows(processedRows as Data[]);
+          setRows(processedRows);
         }
         else 
         {
@@ -175,6 +172,9 @@ export function useFetchAndProcessData()
   return { rows, isLoading }; 
 };
 
+/**
+ * FUNCTION to handle viewing the CSV file!
+ */
 export function useDocumentLoader(rowId: string | null) 
 {
   const [filePath, setFilePath] = useState<string | null>(null);
@@ -209,8 +209,8 @@ export function useDocumentLoader(rowId: string | null)
         } 
 
         const data = await response.json();
-        // console.log("Laravel Response Data: " + data); // Removed console.log
-        // console.log("Laravel Response Data File Path: " + data.file_path); // Removed console.log
+        console.log("Laravel Response Data: " + data);
+        console.log("Laravel Response Data File Path: " + data.file_path);
 
         const pathString = data.file_path || data; 
 
@@ -227,6 +227,8 @@ export function useDocumentLoader(rowId: string | null)
 
   }, [rowId]);
 
+  console.log("FILE PATH: " + filePath);
+
   // Fetch the CSV content ONLY when filePath changes
   useEffect(() => 
   {
@@ -238,9 +240,12 @@ export function useDocumentLoader(rowId: string | null)
     const loadCsvData = function() 
     {
         // Ensure we construct the URL correctly
+        // If filePath already contains "uploads/", don't add it again.
+        // If it's just the filename, add the folder.
+        // 
         const url = `/storage/${filePath}`; // Adjust based on where your files live in 'public'
 
-        // console.log("Fetching CSV content from:", url); // Removed console.log
+        console.log("Fetching CSV content from:", url);
 
         fetch(url)
         .then(response => response.text())
@@ -259,12 +264,19 @@ export function useDocumentLoader(rowId: string | null)
 
   }, [filePath]);
 
-  // console.log("CSV CONTENT: " + csvContent); // Removed console.log
+  console.log("CSV CONTENT: " + csvContent);
 
   return { csvContent, filePath, loading };
 }
 
-function DocumentHistoryTable() 
+// interface for props to accept the refreshTrigger
+// pass these to the DocumentHistoryTable function
+interface DocumentHistoryTableProps
+{
+  refreshTrigger: number;
+}
+
+function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps ) 
 {
   // Remember to call hooks only at the top level components
   // For Displaying the table - came with the react component idk what they're being used for pls forgive me onegai
@@ -287,7 +299,7 @@ function DocumentHistoryTable()
   };
 
   // Call data process function
-  const { rows, isLoading } = useFetchAndProcessData();
+  const { rows, isLoading } = useFetchAndProcessData(refreshTrigger);
 
   if (isLoading)
   {
@@ -297,8 +309,7 @@ function DocumentHistoryTable()
   // For viewing CSV files
   const handleViewDocumentClick = (id: string) => 
   {
-    // [COMMENT: Changed from setting internal state to calling the prop handler]
-    onRowSelect(id);
+    setSelectedRowId(id);
   };
 
   return (
@@ -323,29 +334,22 @@ function DocumentHistoryTable()
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row) => 
               {
+                const document_id = null;
                 return (
-                  // [COMMENT: Added highlighting based on selectedRowId prop]
-                  <TableRow 
-                      hover 
-                      role="checkbox" 
-                      tabIndex={-1} 
-                      key={row.document_id} 
-                      sx={{ backgroundColor: row.document_id === selectedRowId ? '#e0f7fa' : 'inherit' }}
-                  >
+                  <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
                     {
                     columns
                     .map((column) => 
                     {
-                      // [COMMENT: Fixed column value access]
-                      const value = row[column.id as keyof Data]; 
-                      
+                      const value = row[column.id];
                       if (column.id === "check_result")
                       {
                         // BUTTON to check document result
                         return (
                           <TableCell key="check_result" align="center">
-                            {/* Pass the document_id to the handler */}
-                            <IconButton aria-label="predict" onClick={() => handleViewDocumentClick(row.document_id)}>
+                            {/* () => function() makes it so that it's called when the comp/button is CLICKED */}
+                            {/* function() makes it so that the function is called as soon as it's rendered */}
+                            <IconButton aria-label="delete" onClick={() => handleViewDocumentClick(row.document_id)}>
                               <ExitToAppIcon />
                             </IconButton>
                           </TableCell>
@@ -381,49 +385,18 @@ function DocumentHistoryTable()
   );
 }
 
-// [COMMENT: Added back PredictionView component]
-function PredictionView({ documentId }: PredictionViewProps) {
-    const { loading, predictionResult, filePath } = UsingModel(documentId); 
-
-    if (!documentId) {
-        return <p>Select a document from the table below to run the prediction model.</p>;
-    }
-
-    if (loading) {
-        return <p>Loading data and running prediction on document **{documentId}**...</p>;
-    }
-    
-    if (predictionResult) {
-        if (predictionResult.error) {
-            return (
-                <div style={{ color: 'red', border: '1px solid red', padding: '10px' }}>
-                    <h4>❌ Prediction Failed</h4>
-                    <p>File: **{filePath?.split('/').pop()}**</p>
-                    <p>Error Details: {predictionResult.error}</p>
-                </div>
-            );
-        }
-        
-        return (
-            <div style={{ border: '1px solid green', padding: '10px' }}>
-                <h4>✅ Prediction Complete!</h4>
-                <p>Filename: **{predictionResult.filename}**</p>
-                <p>Rows Processed: **{predictionResult.row_count}**</p>
-                <pre style={{ maxHeight: '200px', overflowY: 'scroll', background: '#f4f4f4', padding: '10px' }}>
-                    {JSON.stringify(predictionResult.predictions, null, 2)}
-                </pre>
-            </div>
-        );
-    }
-
-    return <p>Ready to run model on document ID: **{documentId}**</p>;
-}
-
-
-// --- APPLICATION PROCESS DATA (Content for Tab 0) ---
-
 const ApplicationProcessData: FC = () => 
 {
+  // created state to track the updates
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // state handler function that incremenets the key (which forces a refresh)
+  const handleRefreshData = () =>
+  {
+    console.log("Refreshing...");
+    setRefreshKey(prevKey => prevKey + 1);
+  }
+
     return (
         <div className = "w-full p-6 mt-4 mb-3">
             {/* MAIN APPLICATION GRID */}
@@ -437,16 +410,16 @@ const ApplicationProcessData: FC = () =>
                         border: '1px solid grey'
                     }}
             >
-                <Grid item>
+                <Grid size = {8}>
                     <span className="text-gray-700">Upload the required files to import here.</span>
                 </Grid>
-                <Grid item>
+                <Grid size = {8}>
                     {/* FILE UPLOAD BUTTON */}
                     <FileUploadButton 
                       onUploadSuccess = {handleRefreshData} // to refresh the table
                     />
                 </Grid>
-                <Grid item>
+                <Grid size = {8}>
                     <span className="text-gray-700">Note: Only files of .csv type are allowed as of now</span>
                 </Grid>
             </Grid>
@@ -456,9 +429,11 @@ const ApplicationProcessData: FC = () =>
             <Typography variant="h4" component="h4" sx={{ color:"black", }}>
                 Document History
             </Typography>
-            <DocumentHistoryTable />
+            <DocumentHistoryTable 
+              refreshTrigger = {refreshKey}
+            />
         </div>
     );
 }
 
-export default ApplicationDashboard;
+export default ApplicationProcessData;
