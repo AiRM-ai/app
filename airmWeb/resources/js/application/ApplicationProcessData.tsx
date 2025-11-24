@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, FC, KeyboardEvent, ChangeEvent } from 'react';
+import React, { useState, useEffect, FC, ChangeEvent } from 'react';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
 import Grid from '@mui/material/Grid';
@@ -11,18 +11,26 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import { Typography } from '@mui/material';
-import { CircularProgress } from '@mui/material';
+import { Typography, Button, Input, CircularProgress, Alert } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
-// For CSV Parsing
-import Papa from "papaparse"; 
+// For CSV Parsing (Kept for completeness, though not directly used in this file's logic)
+// import Papa from "papaparse"; 
 
 // Components from resources/js/components/applicationComponents/dashboardComponents
 import ApplicationTopBar from "../components/applicationComponents/dashboardComponents/ApplicationTopBar";
 import TabLayout from "../components/applicationComponents/dashboardComponents/TabLayout";
-import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
+
+// [COMMENT: REMOVED external import for FileUploadButton]
+// import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
+
+// Assuming these are external components your dashboard needs:
+import ApplicationDataViewer from './ApplicationDataViewer';
+import ApplicationItemList from './ApplicationItemList';
+
+
+// --- INTERFACES AND DATA STRUCTURES ---
 
 interface Column {
   id: 'username' | 'file_name' | 'imported_date' | 'imported_time' | 'check_result';
@@ -39,21 +47,18 @@ const columns: readonly Column[] = [
     label: 'File Name',
     minWidth: 170,
     align: 'center',
-    format: (value: number) => value.toLocaleString('en-US'),
   },
   {
     id: 'imported_date',
     label: 'Date Imported',
     minWidth: 170,
     align: 'center',
-    format: (value: number) => value.toLocaleString('en-US'),
   },
   {
     id: 'imported_time',
     label: 'Updated',
     minWidth: 170,
     align: 'center',
-    format: (value: number) => value.toLocaleString('en-US'),
   },
   {
     id: 'check_result',
@@ -84,27 +89,20 @@ function createData(
     return { document_id, username, file_name, imported_date, imported_time };
 }
 
-// useFetchAndProcessData
-/**
- * called use cuz react is weird, wants me to name the custom hook starting with use
- * 
- * @param refreshTrigger to see if the table needs a refresh or not
- * @returns 
- */
+
+// --- HOOKS ---
+
 export function useFetchAndProcessData(refreshTrigger: number)
 {
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState<Data[]>([]);
   const [documents, setDocuments] = useState([]);    
   
-  // we stiilll loading the data fam?
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
 
-    // Fetch records by user
     async function fetchData()
     {
-      // Reset loading to true when a refresh occurs
       setIsLoading(true);
 
       try 
@@ -112,32 +110,27 @@ export function useFetchAndProcessData(refreshTrigger: number)
         const response = await fetch('api/documents/fetch-documents-by-user', {
           method: 'GET',
           headers: {
-            // Tell the server we are sending JSON data
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            // IMPORTANT: Add CSRF token for web routes, or handle in headers for API
             'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
         },
         })
 
         if (!response.ok)
         {
-          throw new Error("HTTPS ERROR! Status: ${response.status}");
+          throw new Error(`HTTPS ERROR! Status: ${response.status}`);
         }
 
         const documents = await response.json();
         setDocuments(documents);
-        //console.log("DOCUMENTS: " + documents);
 
         if (Array.isArray(documents))
         {
           const processedRows = documents.map(item => 
           {
-            // Format Date accordingly
             const importDateAndTime = new Date(item.created_at);
             const updateDateAndTime = new Date(item.updated_at);
 
-            // Call your function with the values from each item
             return createData(
               item.id,
               item.username,
@@ -147,7 +140,7 @@ export function useFetchAndProcessData(refreshTrigger: number)
             );
           });
 
-          setRows(processedRows);
+          setRows(processedRows as Data[]);
         }
         else 
         {
@@ -166,25 +159,19 @@ export function useFetchAndProcessData(refreshTrigger: number)
 
     fetchData();
 
-    // whenever refreshTrigger changes, the use effect runs again!
   }, [refreshTrigger]);
 
   return { rows, isLoading }; 
 };
 
-/**
- * FUNCTION to handle viewing the CSV file!
- */
 export function useDocumentLoader(rowId: string | null) 
 {
   const [filePath, setFilePath] = useState<string | null>(null);
   const [csvContent, setCsvContent] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch the File Path when rowId changes
   useEffect(() =>
     {
-    // Don't run if there is no rowId selected
     if (!rowId) return;
 
     async function fetchFilePathById() 
@@ -192,7 +179,6 @@ export function useDocumentLoader(rowId: string | null)
       setLoading(true);
       try 
       {
-        // Pass rowId in the URL, and not THE body, because it is a GET request
         const response = await fetch(`/api/documents/fetch-file-path-by-id?id=${rowId}`, {
           method: 'GET',
           headers: 
@@ -209,12 +195,8 @@ export function useDocumentLoader(rowId: string | null)
         } 
 
         const data = await response.json();
-        console.log("Laravel Response Data: " + data);
-        console.log("Laravel Response Data File Path: " + data.file_path);
-
         const pathString = data.file_path || data; 
 
-        // Assuming the API returns { path: "some/path.csv" } or similar
         setFilePath(pathString); 
       } 
       catch (error) 
@@ -227,9 +209,6 @@ export function useDocumentLoader(rowId: string | null)
 
   }, [rowId]);
 
-  console.log("FILE PATH: " + filePath);
-
-  // Fetch the CSV content ONLY when filePath changes
   useEffect(() => 
   {
     if (!filePath || filePath.length === 0)
@@ -239,20 +218,13 @@ export function useDocumentLoader(rowId: string | null)
 
     const loadCsvData = function() 
     {
-        // Ensure we construct the URL correctly
-        // If filePath already contains "uploads/", don't add it again.
-        // If it's just the filename, add the folder.
-        // 
-        const url = `/storage/${filePath}`; // Adjust based on where your files live in 'public'
-
-        console.log("Fetching CSV content from:", url);
+        const url = `/storage/${filePath}`; 
 
         fetch(url)
         .then(response => response.text())
         .then(responseText => {
-          //console.log("RESPONSE TEXT: " + responseText);
           setCsvContent(responseText);
-          setLoading(false); // Done loading
+          setLoading(false); 
         })
         .catch(error => {
           console.error(error);
@@ -264,30 +236,216 @@ export function useDocumentLoader(rowId: string | null)
 
   }, [filePath]);
 
-  console.log("CSV CONTENT: " + csvContent);
-
   return { csvContent, filePath, loading };
 }
 
-// interface for props to accept the refreshTrigger
-// pass these to the DocumentHistoryTable function
+function UsingModel(documentId: string | null)
+{
+    const { csvContent, filePath, loading: docLoading } = useDocumentLoader(documentId);
+    
+    const [loading, setLoading] = useState(docLoading);
+    const [predictionResult, setPredictionResult] = useState<any>(null); 
+
+    useEffect(() => {
+        if (!csvContent || !filePath) return;
+        
+        const callFastApiPrediction = async (content: string, path: string) => {
+            setLoading(true);
+            const fileName = path.split('/').pop() || 'data.csv'; 
+
+            try {
+                const response = await fetch('/api/predictions/fetch', { 
+                    method: 'POST',
+                    headers: 
+                    {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                    },
+                    body: JSON.stringify({ 
+                        csv_content: content, 
+                        file_name: fileName   
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setPredictionResult({ error: data.error || 'Prediction failed' });
+                    return;
+                }
+
+                setPredictionResult(data);                 
+            } catch (error) {
+                setPredictionResult({ error: 'Network error or service unavailable.' });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        callFastApiPrediction(csvContent, filePath);
+
+    }, [csvContent, filePath]);
+
+    useEffect(() => {
+        if (docLoading) {
+            setLoading(true);
+        }
+    }, [docLoading]);
+    
+    return { csvContent, filePath, loading, predictionResult }; 
+}
+
+// --- LOCAL FILE UPLOAD BUTTON COMPONENT (NEW IMPLEMENTATION WITH STATUS) ---
+
+interface LocalFileUploadButtonProps {
+    onUploadSuccess: () => void;
+}
+
+const LocalFileUploadButton: FC<LocalFileUploadButtonProps> = ({ onUploadSuccess }) => {
+    // [COMMENT: State for selected file, upload status, and messages]
+    const [file, setFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
+    const [statusMessage, setStatusMessage] = useState('');
+
+    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = event.target.files ? event.target.files[0] : null;
+        if (selectedFile && selectedFile.name.endsWith('.csv')) {
+            setFile(selectedFile);
+            setStatus('idle');
+            setStatusMessage(`Ready to upload: ${selectedFile.name}`);
+        } else {
+            setFile(null);
+            setStatus('error');
+            setStatusMessage('Error: Please select a valid .csv file.');
+        }
+    };
+
+    const handleUpload = async () => {
+        if (!file) {
+            setStatus('error');
+            setStatusMessage('No file selected.');
+            return;
+        }
+
+        setStatus('loading');
+        setUploading(true);
+        setStatusMessage(`Uploading ${file.name}...`);
+
+        const formData = new FormData();
+        // IMPORTANT: The key 'csv_file' must match the expected input name on your Laravel backend route
+        formData.append('csv_file', file);
+
+        try {
+            // [COMMENT: Targeting the Laravel upload endpoint]
+            const response = await fetch('/api/documents/upload', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                    // Note: 'Content-Type': 'multipart/form-data' is NOT set here.
+                    // The browser automatically sets it when sending FormData, including the correct boundary.
+                },
+                body: formData,
+            });
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                setStatus('error');
+                setStatusMessage(`Upload failed: ${responseData.message || 'Server error'}`);
+                return;
+            }
+
+            setStatus('success');
+            setStatusMessage('File uploaded successfully! Table updating...');
+            onUploadSuccess(); // Trigger table refresh
+        } catch (error) {
+            setStatus('error');
+            setStatusMessage('Network error. Could not connect to the upload service.');
+            console.error('Upload error:', error);
+        } finally {
+            setUploading(false);
+            // Clear status after a short delay for better UX
+            setTimeout(() => setStatus('idle'), 3000); 
+        }
+    };
+
+    // Helper component to display the status
+    const StatusDisplay = () => {
+        if (status === 'loading') {
+            return (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    <Typography color="primary">{statusMessage}</Typography>
+                </Box>
+            );
+        }
+        if (status === 'error') {
+            return <Alert severity="error">{statusMessage}</Alert>;
+        }
+        if (status === 'success') {
+            return <Alert severity="success">{statusMessage}</Alert>;
+        }
+        if (file && status === 'idle') {
+            return <Typography color="textSecondary">{statusMessage}</Typography>;
+        }
+        return null;
+    };
+
+    return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <label htmlFor="csv-upload-button">
+                    <Input
+                        accept=".csv"
+                        id="csv-upload-button"
+                        type="file"
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                    />
+                    <Button variant="contained" component="span" disabled={uploading}>
+                        {file ? 'Change File' : 'Select CSV File'}
+                    </Button>
+                </label>
+                <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleUpload} 
+                    disabled={!file || uploading || status === 'error'}
+                >
+                    {uploading ? 'Uploading...' : 'Upload'}
+                </Button>
+            </Box>
+            <StatusDisplay />
+        </Box>
+    );
+};
+
+// --- HELPER COMPONENTS (DocumentHistoryTable and PredictionView remain unchanged) ---
+
 interface DocumentHistoryTableProps
 {
   refreshTrigger: number;
+  selectedRowId: string | null; 
+  onRowSelect: (id: string) => void; 
 }
 
-function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps ) 
+interface PredictionViewProps {
+    documentId: string | null;
+}
+
+function DocumentHistoryTable({ refreshTrigger, selectedRowId, onRowSelect }: DocumentHistoryTableProps) 
 {
-  // Remember to call hooks only at the top level components
-  // For Displaying the table - came with the react component idk what they're being used for pls forgive me onegai
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // State to track which row the user clicked
-  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const { rows, isLoading } = useFetchAndProcessData(refreshTrigger);
 
-  // It will sit waiting. It won't fetch anything until selectedRowId is set.
-  const { csvContent, loading } = useDocumentLoader(selectedRowId);
+  if (isLoading)
+  {
+    return <CircularProgress />;
+  }
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -298,18 +456,9 @@ function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps )
     setPage(0);
   };
 
-  // Call data process function
-  const { rows, isLoading } = useFetchAndProcessData(refreshTrigger);
-
-  if (isLoading)
-  {
-    return <CircularProgress />;
-  }
-
-  // For viewing CSV files
   const handleViewDocumentClick = (id: string) => 
   {
-    setSelectedRowId(id);
+    onRowSelect(id);
   };
 
   return (
@@ -334,22 +483,25 @@ function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps )
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row) => 
               {
-                const document_id = null;
                 return (
-                  <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
+                  <TableRow 
+                      hover 
+                      role="checkbox" 
+                      tabIndex={-1} 
+                      key={row.document_id} 
+                      sx={{ backgroundColor: row.document_id === selectedRowId ? '#e0f7fa' : 'inherit' }}
+                  >
                     {
                     columns
                     .map((column) => 
                     {
-                      const value = row[column.id];
+                      const value = row[column.id as keyof Data]; 
+                      
                       if (column.id === "check_result")
                       {
-                        // BUTTON to check document result
                         return (
                           <TableCell key="check_result" align="center">
-                            {/* () => function() makes it so that it's called when the comp/button is CLICKED */}
-                            {/* function() makes it so that the function is called as soon as it's rendered */}
-                            <IconButton aria-label="delete" onClick={() => handleViewDocumentClick(row.document_id)}>
+                            <IconButton aria-label="predict" onClick={() => handleViewDocumentClick(row.document_id)}>
                               <ExitToAppIcon />
                             </IconButton>
                           </TableCell>
@@ -385,26 +537,71 @@ function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps )
   );
 }
 
+function PredictionView({ documentId }: PredictionViewProps) {
+    const { loading, predictionResult, filePath } = UsingModel(documentId); 
+
+    if (!documentId) {
+        return <p>Select a document from the table below to run the prediction model.</p>;
+    }
+
+    if (loading) {
+        return <p>Loading data and running prediction on document **{documentId}**...</p>;
+    }
+    
+    if (predictionResult) {
+        if (predictionResult.error) {
+            return (
+                <div style={{ color: 'red', border: '1px solid red', padding: '10px' }}>
+                    <h4>❌ Prediction Failed</h4>
+                    <p>File: **{filePath?.split('/').pop()}**</p>
+                    <p>Error Details: {predictionResult.error}</p>
+                </div>
+            );
+        }
+        
+        return (
+            <div style={{ border: '1px solid green', padding: '10px' }}>
+                <h4>✅ Prediction Complete!</h4>
+                <p>Filename: **{predictionResult.filename}**</p>
+                <p>Rows Processed: **{predictionResult.row_count}**</p>
+                <pre style={{ maxHeight: '200px', overflowY: 'scroll', background: '#f4f4f4', padding: '10px' }}>
+                    {JSON.stringify(predictionResult.predictions, null, 2)}
+                </pre>
+            </div>
+        );
+    }
+
+    return <p>Ready to run model on document ID: **{documentId}**</p>;
+}
+
+
+// --- APPLICATION PROCESS DATA (Content for Tab 0) ---
+
 const ApplicationProcessData: FC = () => 
 {
-  // created state to track the updates
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // state handler function that incremenets the key (which forces a refresh)
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+
   const handleRefreshData = () =>
   {
-    console.log("Refreshing...");
+    console.log("Refreshing Document History Table...");
     setRefreshKey(prevKey => prevKey + 1);
   }
 
+  const handleDocumentSelection = (id: string) => {
+      setSelectedDocumentId(id);
+  };
+
+
     return (
         <div className = "w-full p-6 mt-4 mb-3">
-            {/* MAIN APPLICATION GRID */}
+            {/* MAIN APPLICATION GRID: FILE UPLOAD SECTION */}
             <Grid container 
                 spacing={4}
-                justifyContent={"center"} // centers items vertically
-                direction="column"  // stacks items
-                alignContent={"center"} // centers items horizontally
+                justifyContent={"center"} 
+                direction="column"  
+                alignContent={"center"} 
                 alignItems="center"
                 sx={{ width: '100%', 
                         border: '1px solid grey'
@@ -413,13 +610,13 @@ const ApplicationProcessData: FC = () =>
                 <Grid size = {8}>
                     <span className="text-gray-700">Upload the required files to import here.</span>
                 </Grid>
-                <Grid size = {8}>
-                    {/* FILE UPLOAD BUTTON */}
-                    <FileUploadButton 
-                      onUploadSuccess = {handleRefreshData} // to refresh the table
+                <Grid>
+                    {/* FILE UPLOAD BUTTON (Now using the local implementation with status) */}
+                    <LocalFileUploadButton 
+                      onUploadSuccess = {handleRefreshData} 
                     />
                 </Grid>
-                <Grid size = {8}>
+                <Grid>
                     <span className="text-gray-700">Note: Only files of .csv type are allowed as of now</span>
                 </Grid>
             </Grid>
@@ -429,11 +626,21 @@ const ApplicationProcessData: FC = () =>
             <Typography variant="h4" component="h4" sx={{ color:"black", }}>
                 Document History
             </Typography>
+            
+            {/* PREDICTION VIEW */}
+            <Box sx={{ m: 2 }} />
+            <PredictionView documentId={selectedDocumentId} /> 
+            <Box sx={{ m: 2 }} />
+
+            {/* DOCUMENT HISTORY TABLE */}
             <DocumentHistoryTable 
               refreshTrigger = {refreshKey}
+              selectedRowId={selectedDocumentId}
+              onRowSelect={handleDocumentSelection}
             />
         </div>
     );
 }
+
 
 export default ApplicationProcessData;
