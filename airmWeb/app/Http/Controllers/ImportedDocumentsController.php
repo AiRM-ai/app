@@ -77,8 +77,10 @@ class ImportedDocumentsController extends Controller
         //
         // This is a crucial security step. It ensures the 'document_name'
         // field exists, is a string, and isn't excessively long.
+        // 
+        // IMPORTANT: also please change the max upload file size and the max post size in your php.ini file
         $validated = $request->validate([
-            'file' => 'required|file|mimes:csv,text|max:2048', // for the actual file
+            'file' => 'required|file|mimes:csv,text|max:200000', // for the actual file
         ]);
 
         // Get the currently authenticated user
