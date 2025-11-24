@@ -90,10 +90,7 @@ function createData(
     return { document_id, username, file_name, imported_date, imported_time };
 }
 
-
-// --- HOOKS ---
-
-export function useFetchAndProcessData(refreshTrigger: number)
+export function useFetchAndProcessData()
 {
   // [COMMENT: Retained from ApplicationProcessData2.tsx]
   // FIX: Explicitly set the type of the 'rows' state to Data[] for better typing
@@ -230,8 +227,6 @@ export function useDocumentLoader(rowId: string | null)
 
   }, [rowId]);
 
-  // console.log("FILE PATH: " + filePath); // Removed console.log
-
   // Fetch the CSV content ONLY when filePath changes
   useEffect(() => 
   {
@@ -269,98 +264,18 @@ export function useDocumentLoader(rowId: string | null)
   return { csvContent, filePath, loading };
 }
 
-// [COMMENT: Added back the UsingModel hook required for running the prediction]
-function UsingModel(documentId: string | null)
+function DocumentHistoryTable() 
 {
-    // The useDocumentLoader handles fetching the file content (csvContent)
-    const { csvContent, filePath, loading: docLoading } = useDocumentLoader(documentId);
-    
-    // State for overall prediction process
-    const [loading, setLoading] = useState(docLoading);
-    const [predictionResult, setPredictionResult] = useState<any>(null); 
+  // Remember to call hooks only at the top level components
+  // For Displaying the table - came with the react component idk what they're being used for pls forgive me onegai
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-    useEffect(() => {
-        // Only run prediction if content is fetched and a file path exists
-        if (!csvContent || !filePath) return;
-        
-        const callFastApiPrediction = async (content: string, path: string) => {
-            setLoading(true);
-            // Extract filename from the path
-            const fileName = path.split('/').pop() || 'data.csv'; 
+  // State to track which row the user clicked
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
-            try {
-                // Laravel proxy route that forwards the CSV data to FastAPI
-                const response = await fetch('/api/predictions/fetch', { 
-                    method: 'POST',
-                    headers: 
-                    {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
-                    },
-                    body: JSON.stringify({ 
-                        csv_content: content, 
-                        file_name: fileName   
-                    }),
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    setPredictionResult({ error: data.error || 'Prediction failed' });
-                    return;
-                }
-
-                setPredictionResult(data);                 
-            } catch (error) {
-                setPredictionResult({ error: 'Network error or service unavailable.' });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        callFastApiPrediction(csvContent, filePath);
-
-    }, [csvContent, filePath]);
-
-    // Keep loading state in sync with docLoading
-    useEffect(() => {
-        if (docLoading) {
-            setLoading(true);
-        }
-    }, [docLoading]);
-    
-    return { csvContent, filePath, loading, predictionResult }; 
-}
-
-// --- HELPER COMPONENTS ---
-
-interface DocumentHistoryTableProps
-{
-  refreshTrigger: number;
-  // [COMMENT: Added prop to receive selected row ID from parent ApplicationProcessData]
-  selectedRowId: string | null; 
-  // [COMMENT: Added prop to send the selected row ID back to parent ApplicationProcessData]
-  onRowSelect: (id: string) => void; 
-}
-
-interface PredictionViewProps {
-    documentId: string | null;
-}
-
-function DocumentHistoryTable({ refreshTrigger, selectedRowId, onRowSelect }: DocumentHistoryTableProps) 
-{
-  // For Displaying the table 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  // Call data process function
-  const { rows, isLoading } = useFetchAndProcessData(refreshTrigger);
-
-  if (isLoading)
-  {
-    return <CircularProgress />;
-  }
+  // It will sit waiting. It won't fetch anything until selectedRowId is set.
+  const { csvContent, loading } = useDocumentLoader(selectedRowId);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -370,6 +285,14 @@ function DocumentHistoryTable({ refreshTrigger, selectedRowId, onRowSelect }: Do
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
+
+  // Call data process function
+  const { rows, isLoading } = useFetchAndProcessData();
+
+  if (isLoading)
+  {
+    return <CircularProgress />;
+  }
 
   // For viewing CSV files
   const handleViewDocumentClick = (id: string) => 
@@ -501,25 +424,6 @@ function PredictionView({ documentId }: PredictionViewProps) {
 
 const ApplicationProcessData: FC = () => 
 {
-  // [COMMENT: Retained state for file upload refresh from ApplicationProcessData2.tsx]
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  // [COMMENT: Added state for document selection to trigger prediction]
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
-
-  // state handler function that incremenets the key (which forces a refresh)
-  const handleRefreshData = () =>
-  {
-    console.log("Refreshing...");
-    setRefreshKey(prevKey => prevKey + 1);
-  }
-
-  // [COMMENT: Added handler for document selection]
-  const handleDocumentSelection = (id: string) => {
-      setSelectedDocumentId(id);
-  };
-
-
     return (
         <div className = "w-full p-6 mt-4 mb-3">
             {/* MAIN APPLICATION GRID */}
@@ -552,61 +456,7 @@ const ApplicationProcessData: FC = () =>
             <Typography variant="h4" component="h4" sx={{ color:"black", }}>
                 Document History
             </Typography>
-            
-            {/* [COMMENT: Added Prediction View component] */}
-            <Box sx={{ m: 2 }} />
-            <PredictionView documentId={selectedDocumentId} /> 
-            <Box sx={{ m: 2 }} />
-
-            {/* [COMMENT: Updated DocumentHistoryTable props to handle prediction state] */}
-            <DocumentHistoryTable 
-              refreshTrigger = {refreshKey}
-              selectedRowId={selectedDocumentId}
-              onRowSelect={handleDocumentSelection}
-            />
-        </div>
-    );
-}
-
-
-// --- MAIN DASHBOARD COMPONENT (From original applicationDashboard.tsx) ---
-
-const ApplicationDashboard: FC = () => 
-{
-    // Current Tab State
-    const [tabValue, setTabValue] = useState(0);
-
-    // Handler to switch tabs and all
-    const handleTabChange = (event: any, newValue: React.SetStateAction<number>) => {
-        setTabValue(newValue);
-    };
-
-    // Function to decide which page to render
-    const renderPage = () => {
-        // console.log("TAB VALUE =" + tabValue); // Removed console.log
-
-        switch (tabValue) {
-        case 0:
-            return <ApplicationProcessData />;
-        case 1:
-            return <ApplicationDataViewer />;
-        case 2:
-            return <ApplicationItemList />;
-        default:
-            return <ApplicationProcessData />;
-        }
-    };
-
-    return (
-        <div>
-            {/* Application Top Bar */}
-            <ApplicationTopBar tabValue={tabValue} handleTabChange={handleTabChange} />
-
-            {/* MAIN APPLICATION GRID */}
-            {/* Based on which tab is selected lol */}
-            <Box>
-                {renderPage()}
-            </Box>
+            <DocumentHistoryTable />
         </div>
     );
 }

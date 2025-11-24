@@ -10,7 +10,7 @@ use App\Models\ItemList;
 
 class ItemsListController extends Controller
 {
-    public function fetchItemRowByItemId(Request $request)
+    public function fetchItemByItemId(Request $request)
     {
         // get the id from the req
         $itemRowId = $request->input("id");
@@ -79,19 +79,33 @@ class ItemsListController extends Controller
         ], 201);
     }
 
-    public function deleteItem(Request $delete)
+    public function deleteItem(Request $request)
     {
         // model
+        $id = $request->input('id'); 
+        
+        // Initilaize db model and get item (by its id)
         $items = new ItemList();
+        $item = $items::find($id); 
 
-        $data = $items::find($delete); 
+        if (!$item)
+        {
+            return response()->json(
+                [
+                    "message" => "Item not found.",
+                    "result" => "ERROR",
+                ],
+                404,
+            );
+        }
 
-        $items::where('id', $delete)->first();
-        $data->delete();
+        // delte
+        $item->delete();
 
         // Success! weifuewhfuow yay!
         return response()->json([
             'message' => 'Item deleted successfully!',
+            'result' => 'SUCCESS',
         ], 201);
     }
 }
