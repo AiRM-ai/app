@@ -249,12 +249,13 @@ function UsingModel(documentId: string | null)
     useEffect(() => {
         if (!csvContent || !filePath) return;
         
-        const callFastApiPrediction = async (content: string, path: string) => {
+        const callFastApiPrediction = async (content: string, path: string) => 
+        {
             setLoading(true);
             const fileName = path.split('/').pop() || 'data.csv'; 
 
             try {
-                const response = await fetch('/api/predictions/fetch', { 
+                const response = await fetch('/predictions/fetch', { 
                     method: 'POST',
                     headers: 
                     {
