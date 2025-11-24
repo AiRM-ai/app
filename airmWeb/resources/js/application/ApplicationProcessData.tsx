@@ -1,4 +1,3 @@
-// resources/js/components/ChatWindow.tsx
 import React, { useState, useEffect, useRef, FC, KeyboardEvent, ChangeEvent } from 'react';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
@@ -14,6 +13,11 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import { Typography } from '@mui/material';
 import { CircularProgress } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+
+// For CSV Parsing
+import Papa from "papaparse"; 
 
 // Components from resources/js/components/applicationComponents/dashboardComponents
 import ApplicationTopBar from "../components/applicationComponents/dashboardComponents/ApplicationTopBar";
@@ -21,7 +25,7 @@ import TabLayout from "../components/applicationComponents/dashboardComponents/T
 import FileUploadButton from "../components/applicationComponents/dashboardComponents/FileUploadButton";
 
 interface Column {
-  id: 'username' | 'document_name' | 'imported_date' | 'imported_time';
+  id: 'username' | 'file_name' | 'imported_date' | 'imported_time' | 'check_result';
   label: string;
   minWidth?: number;
   align?: 'center';
@@ -31,8 +35,8 @@ interface Column {
 const columns: readonly Column[] = [
   { id: 'username', label: 'User', minWidth: 10 },
   {
-    id: 'document_name',
-    label: 'Document Name',
+    id: 'file_name',
+    label: 'File Name',
     minWidth: 170,
     align: 'center',
     format: (value: number) => value.toLocaleString('en-US'),
@@ -46,72 +50,48 @@ const columns: readonly Column[] = [
   },
   {
     id: 'imported_time',
-    label: 'Time Imported',
+    label: 'Updated',
     minWidth: 170,
     align: 'center',
     format: (value: number) => value.toLocaleString('en-US'),
+  },
+  {
+    id: 'check_result',
+    label: 'Check Result',
+    minWidth: 170,
+    align: 'center',
   },
 ];
 
 // interface for data record
 interface Data 
 {
+  document_id: string;
   username: string;
-  document_name: string;
+  file_name: string;
   imported_date: string;
   imported_time: string;
 }
 
 // create a data record
 function createData(
+    document_id: string,
     username: string,
-    document_name: string,
+    file_name: string,
     imported_date: string,
     imported_time: string,
 ): Data {
-    return { username, document_name, imported_date, imported_time };
+    return { document_id, username, file_name, imported_date, imported_time };
 }
 
-// TEST DATA
-const rows = [
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-  createData('India', 'IN', "1324171354", "3287263"),
-  createData('China', 'CN', "1403500365", "9596961"),
-  createData('Italy', 'IT', "60483973", "301340"),
-  createData('United States', 'US', "327167434", "9833520"),
-  createData('Canada', 'CA', "37602103", "9984670"),
-  createData('Australia', 'AU', "25475400", "7692024"),
-  createData('Germany', 'DE', "83019200", "357578"),
-];
-
-export function useFetchAndProcessData()
+// useFetchAndProcessData
+/**
+ * called use cuz react is weird, wants me to name the custom hook starting with use
+ * 
+ * @param refreshTrigger to see if the table needs a refresh or not
+ * @returns 
+ */
+export function useFetchAndProcessData(refreshTrigger: number)
 {
   const [rows, setRows] = useState([]);
   const [documents, setDocuments] = useState([]);    
@@ -124,9 +104,12 @@ export function useFetchAndProcessData()
     // Fetch records by user
     async function fetchData()
     {
+      // Reset loading to true when a refresh occurs
+      setIsLoading(true);
+
       try 
       {
-        const response = await fetch('/documents/fetch-documents-by-user', {
+        const response = await fetch('api/documents/fetch-documents-by-user', {
           method: 'GET',
           headers: {
             // Tell the server we are sending JSON data
@@ -143,24 +126,24 @@ export function useFetchAndProcessData()
         }
 
         const documents = await response.json();
+        setDocuments(documents);
         //console.log("DOCUMENTS: " + documents);
 
         if (Array.isArray(documents))
         {
           const processedRows = documents.map(item => 
           {
-            //const importDateTime = new Date(item.imported_time);
-            //const formattedDate = importDateTime.toLocaleDateString();
-            //const formattedTime = importDateTime.toLocaleTimeString();
-
-            console.log(item.imported_time);
+            // Format Date accordingly
+            const importDateAndTime = new Date(item.created_at);
+            const updateDateAndTime = new Date(item.updated_at);
 
             // Call your function with the values from each item
             return createData(
+              item.id,
               item.username,
-              item.document_name,
-              item.imported_date,
-              item.imported_time,
+              item.file_name,
+              importDateAndTime.toLocaleDateString() + ", " + importDateAndTime.toLocaleTimeString(),
+              updateDateAndTime.toLocaleDateString() + ", " + updateDateAndTime.toLocaleTimeString(),
             );
           });
 
@@ -183,17 +166,128 @@ export function useFetchAndProcessData()
 
     fetchData();
 
-  }, []);
-
-  
+    // whenever refreshTrigger changes, the use effect runs again!
+  }, [refreshTrigger]);
 
   return { rows, isLoading }; 
 };
 
-function DocumentHistoryTable() 
+/**
+ * FUNCTION to handle viewing the CSV file!
+ */
+export function useDocumentLoader(rowId: string | null) 
 {
+  const [filePath, setFilePath] = useState<string | null>(null);
+  const [csvContent, setCsvContent] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch the File Path when rowId changes
+  useEffect(() =>
+    {
+    // Don't run if there is no rowId selected
+    if (!rowId) return;
+
+    async function fetchFilePathById() 
+    {
+      setLoading(true);
+      try 
+      {
+        // Pass rowId in the URL, and not THE body, because it is a GET request
+        const response = await fetch(`/api/documents/fetch-file-path-by-id?id=${rowId}`, {
+          method: 'GET',
+          headers: 
+          {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+          },
+        });
+
+        if (!response.ok)
+        {
+          throw new Error(`HTTPS ERROR! Status: ${response.status}`);
+        } 
+
+        const data = await response.json();
+        console.log("Laravel Response Data: " + data);
+        console.log("Laravel Response Data File Path: " + data.file_path);
+
+        const pathString = data.file_path || data; 
+
+        // Assuming the API returns { path: "some/path.csv" } or similar
+        setFilePath(pathString); 
+      } 
+      catch (error) 
+      {
+        console.error("Failed to fetch file path:", error);
+      }
+    }
+
+    fetchFilePathById(); 
+
+  }, [rowId]);
+
+  console.log("FILE PATH: " + filePath);
+
+  // Fetch the CSV content ONLY when filePath changes
+  useEffect(() => 
+  {
+    if (!filePath || filePath.length === 0)
+    {
+      return; 
+    } 
+
+    const loadCsvData = function() 
+    {
+        // Ensure we construct the URL correctly
+        // If filePath already contains "uploads/", don't add it again.
+        // If it's just the filename, add the folder.
+        // 
+        const url = `/storage/${filePath}`; // Adjust based on where your files live in 'public'
+
+        console.log("Fetching CSV content from:", url);
+
+        fetch(url)
+        .then(response => response.text())
+        .then(responseText => {
+          //console.log("RESPONSE TEXT: " + responseText);
+          setCsvContent(responseText);
+          setLoading(false); // Done loading
+        })
+        .catch(error => {
+          console.error(error);
+          setLoading(false);
+        });
+    };
+
+    loadCsvData(); 
+
+  }, [filePath]);
+
+  console.log("CSV CONTENT: " + csvContent);
+
+  return { csvContent, filePath, loading };
+}
+
+// interface for props to accept the refreshTrigger
+// pass these to the DocumentHistoryTable function
+interface DocumentHistoryTableProps
+{
+  refreshTrigger: number;
+}
+
+function DocumentHistoryTable({ refreshTrigger }: DocumentHistoryTableProps ) 
+{
+  // Remember to call hooks only at the top level components
+  // For Displaying the table - came with the react component idk what they're being used for pls forgive me onegai
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
+  // State to track which row the user clicked
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  // It will sit waiting. It won't fetch anything until selectedRowId is set.
+  const { csvContent, loading } = useDocumentLoader(selectedRowId);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -205,12 +299,18 @@ function DocumentHistoryTable()
   };
 
   // Call data process function
-  const { rows, isLoading } = useFetchAndProcessData();
+  const { rows, isLoading } = useFetchAndProcessData(refreshTrigger);
 
   if (isLoading)
   {
     return <CircularProgress />;
   }
+
+  // For viewing CSV files
+  const handleViewDocumentClick = (id: string) => 
+  {
+    setSelectedRowId(id);
+  };
 
   return (
     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -232,18 +332,39 @@ function DocumentHistoryTable()
           <TableBody>
             {rows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => {
+              .map((row) => 
+              {
+                const document_id = null;
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                    {columns.map((column) => {
+                    {
+                    columns
+                    .map((column) => 
+                    {
                       const value = row[column.id];
-                      return ( 
-                        <TableCell key={column.id} align={column.align}>
-                          {column.format && typeof value === 'number'
-                            ? column.format(value)
-                            : value}
-                        </TableCell>
-                      );
+                      if (column.id === "check_result")
+                      {
+                        // BUTTON to check document result
+                        return (
+                          <TableCell key="check_result" align="center">
+                            {/* () => function() makes it so that it's called when the comp/button is CLICKED */}
+                            {/* function() makes it so that the function is called as soon as it's rendered */}
+                            <IconButton aria-label="delete" onClick={() => handleViewDocumentClick(row.document_id)}>
+                              <ExitToAppIcon />
+                            </IconButton>
+                          </TableCell>
+                        );
+                      }
+                      else 
+                      {
+                        return ( 
+                          <TableCell key={column.id} align={column.align}>
+                            {column.format && typeof value === 'number'
+                              ? column.format(value)
+                              : value}
+                          </TableCell>
+                        );
+                      }
                     })}
                   </TableRow>
                 );
@@ -266,6 +387,16 @@ function DocumentHistoryTable()
 
 const ApplicationProcessData: FC = () => 
 {
+  // created state to track the updates
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // state handler function that incremenets the key (which forces a refresh)
+  const handleRefreshData = () =>
+  {
+    console.log("Refreshing...");
+    setRefreshKey(prevKey => prevKey + 1);
+  }
+
     return (
         <div className = "w-full p-6 mt-4 mb-3">
             {/* MAIN APPLICATION GRID */}
@@ -284,7 +415,9 @@ const ApplicationProcessData: FC = () =>
                 </Grid>
                 <Grid size = {8}>
                     {/* FILE UPLOAD BUTTON */}
-                    <FileUploadButton />
+                    <FileUploadButton 
+                      onUploadSuccess = {handleRefreshData} // to refresh the table
+                    />
                 </Grid>
                 <Grid size = {8}>
                     <span className="text-gray-700">Note: Only files of .csv type are allowed as of now</span>
@@ -296,7 +429,9 @@ const ApplicationProcessData: FC = () =>
             <Typography variant="h4" component="h4" sx={{ color:"black", }}>
                 Document History
             </Typography>
-            <DocumentHistoryTable />
+            <DocumentHistoryTable 
+              refreshTrigger = {refreshKey}
+            />
         </div>
     );
 }

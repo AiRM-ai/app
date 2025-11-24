@@ -65,17 +65,23 @@ Route::get('/app', function ()
 
 // FILES:
 // For File Upload
-Route::post('/documents/save-metadata', [ImportedDocumentsController::class, 'storeDocumentData'])->middleware('auth', 'verified');
+Route::post('/api/documents/upload', [ImportedDocumentsController::class, 'storeDocumentData'])->middleware('auth', 'verified');
 // For fetching files (by user)
-Route::get('/documents/fetch-documents-by-user', [ImportedDocumentsController::class, 'fetchDocumentsByUser'])->middleware('auth', 'verified');
+Route::get('/api/documents/fetch-documents-by-user', [ImportedDocumentsController::class, 'fetchDocumentsByUser'])->middleware('auth', 'verified');
+// For getting the file path (by row/document id)
+Route::get('api/documents/fetch-file-path-by-id', [ImportedDocumentsController::class, 'fetchFilePathByRowId'])->middleware('auth', 'verified');
+//Route::get('/api/documents/fetch-file-path-by-id', function() {return "HELLO FROM route /fetch-file-path-by-id";})->middleware('auth', 'verified'); // testing
 
 // ITEMS:
 // For adding items
 Route::post('/data/add-item', [ItemsListController::class, 'addItem'])->middleware('auth', 'verified');
 // For deleting items
-Route::post('data/delete-item', [ItemsListController::class, 'deleteItem'])->middleware('auth', 'verified');
+Route::post('/data/delete-item', [ItemsListController::class, 'deleteItem'])->middleware('auth', 'verified');
 // For fetching/getting items (also by user obv)
 Route::get('/data/get-items-by-user', [ItemsListController::class, 'fetchItemsByUser'])->middleware('auth', 'verified');
+// For fetching item by item id
+Route::get('/data/get-item-by-id', [ItemsListController::class, 'fetchItemByItemId'])->middleware('auth', 'verified');
+
 
 // --------------------------------
 

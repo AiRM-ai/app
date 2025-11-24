@@ -14,8 +14,23 @@
     </div>
 </header>
 
-<main class="py-16">
+<main class="py-8">
     <div class="max-w-6xl mx-auto px-6 space-y-10">
+        <section>
+            <h2 class="text-3xl font-semibold text-blue-400 mb-4">About the Web Application</h2>
+            <p class="text-gray-300 leading-relaxed max-w-4xl">
+                The AIRM web application was built on the <span class="font-semibold text-blue-300">Laravel framework</span> which allows for easy scaling. 
+                It was built using <span class="font-semibold text-blue-300">React.js</span> for dynamic components. 
+                The AIRM software uses the <span class="font-semibold text-blue-300">MaterialUI Component Library</span> which gives it the sleek, modern, and clean look. 
+            </p>
+        </section>
+        <section>
+            <h2 class="text-3xl font-semibold text-blue-400 mb-4">Model Integration</h2>
+            <p class="text-gray-300 leading-relaxed max-w-4xl">
+                The model responds on a <span class="font-semibold text-blue-300">FastAPI server</span> which the web-application accesses. 
+                Our models take in CSV data, process them, and output reliable, meaningful, and helpful insights into unstructured data.
+            </p>
+        </section>
         <section>
             <h2 class="text-3xl font-semibold text-blue-400 mb-4">About the Models</h2>
             <p class="text-gray-300 leading-relaxed max-w-4xl">
