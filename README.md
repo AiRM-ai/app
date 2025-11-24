@@ -13,10 +13,8 @@ Alisa Sumwalt, Kevin Beutler, and Bhushith Gujjala Hari.
 6. Composer – manages PHP dependencies required by Laravel and backend services.
 7. MySQL / PostgreSQL – database engines used to store user data, item catalogs, and application records.
 
-# Installation Instructions:
-
-
-# Running Instructions:
+# Installation and Running Instructions:
+**Please clone this repo and access the "AIRM: TUTORIAL and HOW-TO" document to get a full, detailed guide on how to run, access, and use the AiRM software.**
 
 
 # File Structure Overview: 
