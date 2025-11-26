@@ -2,11 +2,43 @@
     {
         "Stock_Number":55085080021,
         "Common_Name":"Type OS 2 24' Mast Arm (Galvanized)",
+        "Actual_Reorder_Threshold":3,
         "Predicted_Reorder_Threshold":3.0202915668
     },
     {
         "Stock_Number":55085080016,
         "Common_Name":"Arm, Mast, Galvanized, 15', Type OS1",
+        "Actual_Reorder_Threshold":2,
         "Predicted_Reorder_Threshold":2.0017106533
+    },
+    {
+        "Stock_Number":55085080017,
+        "Common_Name":"Arm, Mast, Galvanized, 20', Type OS1 ",
+        "Actual_Reorder_Threshold":1,
+        "Predicted_Reorder_Threshold":1.0024911165
+    },
+    {
+        "Stock_Number":55085080013,
+        "Common_Name":"Pole, Signal, Galvanized, Type OS1",
+        "Actual_Reorder_Threshold":3,
+        "Predicted_Reorder_Threshold":3.0202915668
+    },
+    {
+        "Stock_Number":55085080018,
+        "Common_Name":"Arm, Mast, Galvanized, 34', Type OS2",
+        "Actual_Reorder_Threshold":2,
+        "Predicted_Reorder_Threshold":1.9933366776
+    },
+    {
+        "Stock_Number":55085080015,
+        "Common_Name":"Pole, Signal, Galvanized, Type OS2",
+        "Actual_Reorder_Threshold":2,
+        "Predicted_Reorder_Threshold":2.0017106533
+    },
+    {
+        "Stock_Number":84084280010,
+        "Common_Name":"ITS Surge Suppression Panel",
+        "Actual_Reorder_Threshold":30,
+        "Predicted_Reorder_Threshold":29.9787826538
     }
 ]

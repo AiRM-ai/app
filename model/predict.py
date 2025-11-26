@@ -62,17 +62,33 @@ def predict(df):
                     random_state=42)
 
     model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
+    #y_pred = model.predict(X_test)
+    y_pred = model.predict(X)
     
 
-    test_identifiers = identifiers.loc[X_test.index]
+    #test_identifiers = identifiers.loc[X_test.index]
+    final_identifiers = identifiers
 
+    '''
     results_df = pd.DataFrame({
     
         'Stock_Number': test_identifiers['Stock Number'] if 'Stock Number' in test_identifiers.columns else X_test.index,
         'Common_Name': test_identifiers['Common Name'] if 'Common Name' in test_identifiers.columns else '',
         
         #'Actual_Reorder_Threshold': y_test.iloc[:, 0].values, # Use .values to match y_pred shape
+        'Predicted_Reorder_Threshold': y_pred
+    })'''
+
+    results_df = pd.DataFrame({
+    
+        # --- CHANGE 3: Update columns to use the full dataset variables ---
+        # We use 'final_identifiers' instead of 'test_identifiers'
+        # We use 'y' (full targets) instead of 'y_test'
+        
+        'Stock_Number': final_identifiers['Stock Number'] if 'Stock Number' in final_identifiers.columns else X.index,
+        'Common_Name': final_identifiers['Common Name'] if 'Common Name' in final_identifiers.columns else '',
+        
+        'Actual_Reorder_Threshold': y.iloc[:, 0].values, 
         'Predicted_Reorder_Threshold': y_pred
     })
 
